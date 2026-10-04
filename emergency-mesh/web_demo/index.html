@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emergency mesh demo | LVISG, SHISTECH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e9eef1; --panel: #f7f9fa; --map: #f2f5f7; --ink: #17242e; --muted: #56656f;
+  --line: #c9d4db; --grid: #dde5ea; --link: #a9b8c2; --focus: #2c66a6;
+  --critical: #c2302a; --urgent: #b8650f; --supplies: #2c66a6; --safe: #687884;
+  --ack: #23855a; --dead: #8a969e;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171d; --panel: #16212a; --map: #121c23; --ink: #dce5ea; --muted: #93a3ad;
+    --line: #2c3c47; --grid: #1c2932; --link: #3b4f5c; --focus: #6aa5e8;
+    --critical: #f0605a; --urgent: #f0a04a; --supplies: #6aa5e8; --safe: #9aabb6;
+    --ack: #4cc38a; --dead: #5d6c76; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f171d; --panel: #16212a; --map: #121c23; --ink: #dce5ea; --muted: #93a3ad;
+  --line: #2c3c47; --grid: #1c2932; --link: #3b4f5c; --focus: #6aa5e8;
+  --critical: #f0605a; --urgent: #f0a04a; --supplies: #6aa5e8; --safe: #9aabb6;
+  --ack: #4cc38a; --dead: #5d6c76; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.45; font-size: 15px;
+}
+.wrap { max-width: 1220px; margin: 0 auto; padding: 20px clamp(12px, 3vw, 32px) 40px; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 1rem; font-weight: 600; margin: 0 0 8px; }
+.lede { margin: 0 0 18px; color: var(--muted); max-width: 70ch; }
+.layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 920px) {
+  .layout { grid-template-columns: minmax(0, 1.5fr) minmax(310px, 1fr); align-items: start; }
+}
+.mapbox { margin: 0; }
+canvas {
+  display: block; width: 100%; aspect-ratio: 1 / 1; background: var(--map);
+  border: 1px solid var(--line); border-radius: 6px; cursor: crosshair; touch-action: manipulation;
+}
+canvas:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.readout { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; color: var(--muted);
+  font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.readout strong { color: var(--ink); font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0; padding: 0; list-style: none;
+  font-size: 0.82rem; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.rail section { padding: 14px 0; border-top: 1px solid var(--line); }
+.rail section:first-child { border-top: 0; padding-top: 0; }
+fieldset { border: 0; margin: 0 0 10px; padding: 0; min-width: 0; }
+legend { font-weight: 500; font-size: 0.9rem; margin-bottom: 6px; padding: 0; }
+.seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line);
+  border-radius: 6px; overflow: hidden; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 7px 4px; text-align: center; font-size: 0.85rem; cursor: pointer; background: var(--panel);
+  border-left: 1px solid var(--line); }
+.seg label:first-of-type { border-left: 0; }
+.seg input:checked + label { background: var(--c); color: #fff; font-weight: 500; }
+.seg input:focus-visible + label { outline: 3px solid var(--focus); outline-offset: -3px; }
+.row { display: grid; grid-template-columns: 1fr 88px; gap: 10px; margin-bottom: 10px; }
+.field label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 3px; }
+select, input[type="text"], input[type="number"] {
+  width: 100%; font: inherit; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px;
+}
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 4px; padding: 7px 12px; cursor: pointer;
+}
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 6px 0 0; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; margin: 0;
+  font-variant-numeric: tabular-nums; }
+.stats div { min-width: 0; }
+.stats dt { font-size: 0.78rem; color: var(--muted); }
+.stats dd { margin: 0; font-size: 1.05rem; font-weight: 500; }
+#status { min-height: 2.6em; margin: 10px 0 0; font-size: 0.88rem; }
+ol.incidents { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 460px; overflow-y: auto; }
+ol.incidents button {
+  width: 100%; text-align: left; padding: 8px 10px; border-left: 4px solid var(--c);
+  display: grid; gap: 1px; font-size: 0.85rem; line-height: 1.35;
+}
+ol.incidents button[aria-pressed="true"] { background: var(--panel); color: var(--ink); border-color: var(--c);
+  box-shadow: inset 0 0 0 1px var(--c); }
+.inc-title { font-weight: 600; color: var(--c); }
+.inc-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); font-size: 0.88rem; margin: 0; }
+.about { font-size: 0.85rem; color: var(--muted); }
+.about p { margin: 0 0 6px; }
+.vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Emergency mesh: live demo</h1>
+    <p class="lede">Click anywhere on the map to send an SOS from that spot. The nearest node picks it up over Wi-Fi, and it hops node to node over LoRa until it reaches the rescue base in the centre.</p>
+  </header>
+
+  <main class="layout">
+    <figure class="mapbox">
+      <canvas id="map" tabindex="0" aria-label="Map of 25 mesh nodes. Click to act at a spot, or use arrow keys to move the cursor and press Enter." aria-describedby="keys"></canvas>
+      <p id="keys" class="vh">Arrow keys move the cursor by 50 metres, with Shift by 200 metres. Enter or Space sends an SOS, or destroys or repairs the nearest node, depending on the selected mode.</p>
+      <div class="readout" aria-live="off">
+        <span>Pointer: <strong id="ptr">move over the map</strong></span>
+        <span>Nearest node: <strong id="near">none</strong></span>
+      </div>
+      <ul class="legend">
+        <li><span class="sw" style="background:var(--critical)"></span>Critical</li>
+        <li><span class="sw" style="background:var(--urgent)"></span>Urgent</li>
+        <li><span class="sw" style="background:var(--supplies)"></span>Supplies</li>
+        <li><span class="sw" style="background:var(--safe)"></span>I'm safe</li>
+        <li><span class="sw" style="background:var(--ack)"></span>Confirmation back to sender</li>
+      </ul>
+    </figure>
+
+    <div class="rail">
+      <section aria-labelledby="h-send">
+        <h2 id="h-send">What the person reports</h2>
+        <fieldset>
+          <legend>Priority</legend>
+          <div class="seg">
+            <input type="radio" name="prio" id="p3" value="3" checked><label for="p3" style="--c:var(--critical)">Critical</label>
+            <input type="radio" name="prio" id="p2" value="2"><label for="p2" style="--c:var(--urgent)">Urgent</label>
+            <input type="radio" name="prio" id="p1" value="1"><label for="p1" style="--c:var(--supplies)">Supplies</label>
+            <input type="radio" name="prio" id="p0" value="0"><label for="p0" style="--c:var(--safe)">I'm safe</label>
+          </div>
+        </fieldset>
+        <div class="row">
+          <div class="field">
+            <label for="etype">Emergency</label>
+            <select id="etype">
+              <option value="2">Trapped</option>
+              <option value="1">Medical</option>
+              <option value="3">Flooding</option>
+              <option value="4">Fire</option>
+              <option value="5">Building collapse</option>
+              <option value="6">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="people">People</label>
+            <input type="number" id="people" min="1" max="255" value="3">
+          </div>
+        </div>
+        <div class="field">
+          <label for="landmark">Landmark (up to 16 characters)</label>
+          <input type="text" id="landmark" maxlength="16" value="School rooftop" autocomplete="off">
+        </div>
+      </section>
+
+      <section aria-labelledby="h-ctrl">
+        <h2 id="h-ctrl">Clicking the map will</h2>
+        <div class="btns" role="group" aria-labelledby="h-ctrl">
+          <button type="button" id="modeSos" aria-pressed="true">Send an SOS</button>
+          <button type="button" id="modeKill" aria-pressed="false">Destroy or repair a node</button>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button type="button" id="crowd">Simulate a crowd (20 SOS)</button>
+          <button type="button" id="pause" aria-pressed="false">Pause</button>
+          <button type="button" id="reset">Reset</button>
+        </div>
+        <div class="row" style="margin-top:10px; grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label for="speed">Playback speed</label>
+            <select id="speed">
+              <option value="0.25">0.25×</option>
+              <option value="0.5" selected>0.5×</option>
+              <option value="1">1× (real time)</option>
+              <option value="5">5×</option>
+              <option value="20">20× (for retries)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="reach">Show Wi-Fi reach</label>
+            <select id="reach"><option value="1" selected>On</option><option value="0">Off</option></select>
+          </div>
+        </div>
+        <p id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section aria-labelledby="h-stats">
+        <h2 id="h-stats">Network</h2>
+        <dl class="stats">
+          <div><dt>Simulated time</dt><dd id="s-time">0.0 s</dd></div>
+          <div><dt>SOS sent</dt><dd id="s-sent">0</dd></div>
+          <div><dt>Reached base</dt><dd id="s-deliv">0</dd></div>
+          <div><dt>Radio transmissions</dt><dd id="s-tx">0</dd></div>
+          <div><dt>Duplicates dropped</dt><dd id="s-dup">0</dd></div>
+          <div><dt>Gave up after 5 tries</dt><dd id="s-fail">0</dd></div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="h-dash">
+        <h2 id="h-dash">Rescue base dashboard</h2>
+        <p class="empty" id="dash-empty">No SOS received yet. Click near a node on the map.</p>
+        <ol class="incidents" id="dash"></ol>
+      </section>
+    </div>
+  </main>
+
+  <section class="about" aria-labelledby="h-about">
+    <h2 id="h-about">About this demo</h2>
+    <p>Nodes follow the same rules as the project's Python simulator (<code>simulation/meshsim/node.py</code>): duplicate dropping, a hop limit of 6, highest priority sent first, a random wait of up to 1 s before sending, a confirmation from the base, and up to 5 sends with doubling waits from 90 s. The 25-node layout is the same one used in the Python demo.</p>
+    <p>Simplified for clarity: radio collisions, listen-before-talk and random packet loss are left out here; the Python simulator models all three. Radio range is 800 m and phone Wi-Fi reach is 200 m (sources in the README). The base sees each node's recorded location and the typed landmark, not the exact spot that was clicked.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- configuration (matches simulation/meshsim defaults) ----------
+  const CFG = {
+    radioRange: 800, wifiReach: 200, hopLimit: 6, ackTimeout: 90, maxAttempts: 5,
+    jitterMax: 1.0, busyBackoff: [0.2, 1.5], sf: 9, bw: 125000,
+  };
+  const REF = { lat: 12.9815, lon: 80.2180 };          // sample reference point (Chennai)
+  const LAYOUT = [[0,1200,1200],[1,-94.3,-51.7],[2,554.9,49.8],[3,1268.7,62.4],[4,1771,56.4],
+    [5,2433.5,53.8],[6,94.8,541],[7,666.4,571.5],[8,1123.2,631.2],[9,1891.2,604],[10,2487.1,692.6],
+    [11,60.1,1234],[12,664.4,1212],[13,1714,1282.8],[14,2470.7,1267.3],[15,-36.6,1815.8],
+    [16,647,1799.7],[17,1108.1,1854.8],[18,1772.6,1895.5],[19,2497.3,1781.8],[20,50.6,2382.5],
+    [21,583.8,2429.9],[22,1154.9,2311.9],[23,1750.8,2405.2],[24,2408.9,2309]];
+  const WORLD = { min: -350, max: 2750 };
+  const PRIO = { 3: "Critical", 2: "Urgent", 1: "Supplies", 0: "I'm safe" };
+  const PRIO_VAR = { 3: "--critical", 2: "--urgent", 1: "--supplies", 0: "--safe" };
+  const ETYPE = { 1: "Medical", 2: "Trapped", 3: "Flooding", 4: "Fire", 5: "Building collapse", 6: "Other" };
+
+  // ---------- LoRa time on air (same formula as protocol.py) ----------
+  function airtime(bytes) {
+    const tSym = 2 ** CFG.sf / CFG.bw;
+    const lowDr = tSym > 0.016 ? 1 : 0;
+    const num = 8 * bytes - 4 * CFG.sf + 28 + 16;
+    const payloadSym = 8 + Math.max(Math.ceil(num / (4 * (CFG.sf - 2 * lowDr))) * 5, 0);
+    return (8 + 4.25) * tSym + payloadSym * tSym;
+  }
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  function landmark16(text) {
+    return dec.decode(enc.encode(text).slice(0, 16)).replace(/\uFFFD+$/, "");
+  }
+  function toLatLon(x, y) {
+    const lat = REF.lat + y / 111320;
+    const lon = REF.lon + x / (111320 * Math.cos(REF.lat * Math.PI / 180));
+    return [lat.toFixed(5), lon.toFixed(5)];
+  }
+
+  // ---------- event queue (binary heap) ----------
+  class Heap {
+    constructor() { this.a = []; }
+    push(e) { const a = this.a; a.push(e); let i = a.length - 1;
+      while (i > 0) { const p = (i - 1) >> 1; if (this.lt(a[i], a[p])) { [a[i], a[p]] = [a[p], a[i]]; i = p; } else break; } }
+    pop() { const a = this.a; const top = a[0]; const last = a.pop();
+      if (a.length) { a[0] = last; let i = 0;
+        for (;;) { const l = 2 * i + 1, r = l + 1; let m = i;
+          if (l < a.length && this.lt(a[l], a[m])) m = l;
+          if (r < a.length && this.lt(a[r], a[m])) m = r;
+          if (m === i) break; [a[i], a[m]] = [a[m], a[i]]; i = m; } }
+      return top; }
+    peek() { return this.a[0]; }
+    lt(x, y) { return x.t < y.t || (x.t === y.t && x.n < y.n); }
+    get size() { return this.a.length; }
+  }
+
+  // ---------- simulation state ----------
+  let S;
+  function freshState() {
+    const nodes = LAYOUT.map(([id, x, y]) => ({
+      id, x, y, base: id === 0, alive: true, seen: new Set(), outbox: [],
+      txScheduled: false, txUntil: 0, seq: 0, nbrs: [],
+    }));
+    for (const a of nodes) for (const b of nodes)
+      if (a !== b && Math.hypot(a.x - b.x, a.y - b.y) <= CFG.radioRange) a.nbrs.push(b);
+    return { now: 0, q: new Heap(), n: 0, nodes, flights: [], rings: [], sos: [], incidents: new Map(),
+      stats: { tx: 0, dup: 0, sent: 0, fail: 0 }, selected: null, counter: 0 };
+  }
+  const at = (t, fn) => S.q.push({ t, n: S.n++, fn });
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const key = (p) => `${p.type}:${p.origin}:${p.seq}:${p.attempt}`;
+
+  function enqueue(node, pkt) {
+    node.outbox.push({ p: -pkt.priority, t: S.now, c: S.counter++, pkt });
+    node.outbox.sort((a, b) => a.p - b.p || a.t - b.t || a.c - b.c);
+    scheduleTx(node);
+  }
+  function scheduleTx(node) {
+    if (node.txScheduled || !node.outbox.length) return;
+    node.txScheduled = true;
+    at(S.now + rand(0, CFG.jitterMax), () => tryTx(node));
+  }
+  function tryTx(node) {
+    node.txScheduled = false;
+    if (!node.alive || !node.outbox.length) return;
+    if (node.txUntil > S.now) {                      // still sending: wait
+      node.txScheduled = true;
+      at(S.now + rand(...CFG.busyBackoff), () => tryTx(node));
+      return;
+    }
+    transmit(node, node.outbox.shift().pkt);
+  }
+  function transmit(node, pkt) {
+    const bytes = pkt.type === "SOS" ? 15 + enc.encode(pkt.landmark).length : 13;
+    const dur = airtime(bytes);
+    node.txUntil = S.now + dur;
+    S.stats.tx++;
+    const colour = pkt.type === "ACK" ? "--ack" : PRIO_VAR[pkt.priority];
+    S.rings.push({ x: node.x, y: node.y, start: S.now, end: S.now + dur, colour });
+    for (const nb of node.nbrs) if (nb.alive)
+      S.flights.push({ x1: node.x, y1: node.y, x2: nb.x, y2: nb.y, start: S.now, end: S.now + dur, colour });
+    at(S.now + dur, () => {
+      scheduleTx(node);
+      if (!node.alive) return;
+      for (const nb of node.nbrs) receive(nb, pkt);
+    });
+  }
+  function receive(node, pkt) {
+    if (!node.alive) return;
+    const k = key(pkt);
+    if (node.seen.has(k)) { S.stats.dup++; return; }
+    node.seen.add(k);
+    const hops = pkt.hopCount + 1;
+    if (node.base) { baseReceive(node, pkt, hops); return; }
+    if (pkt.type === "ACK" && pkt.refOrigin === node.id) {
+      const rec = S.sos.find((r) => r.origin === node.id && r.seq === pkt.refSeq);
+      if (rec && rec.status !== "confirmed") {
+        rec.status = "confirmed";
+        announce(`${PRIO[rec.priority]} SOS near node ${rec.origin}: sender sees "Delivered to rescue base".`);
+        renderDash();
+      }
+      return;
+    }
+    if (pkt.hopLimit > 1)
+      enqueue(node, { ...pkt, hopLimit: pkt.hopLimit - 1, hopCount: hops, path: [...pkt.path, node.id] });
+  }
+  function baseReceive(base, pkt, hops) {
+    if (pkt.type !== "SOS") return;
+    const id = `${pkt.origin}:${pkt.seq}`;
+    if (!S.incidents.has(id)) {
+      const rec = S.sos.find((r) => r.origin === pkt.origin && r.seq === pkt.seq);
+      S.incidents.set(id, { rec, hops, path: [...pkt.path, base.id], at: S.now, attempt: pkt.attempt });
+      S.selected = id;
+      announce(`Base received a ${PRIO[pkt.priority].toLowerCase()} SOS from node ${pkt.origin} after ${hops} hop${hops === 1 ? "" : "s"}.`);
+      renderDash();
+    }
+    if (pkt.origin === base.id) return;
+    const ack = { type: "ACK", origin: base.id, seq: ++base.seq, attempt: 1, hopLimit: CFG.hopLimit,
+      hopCount: 0, priority: pkt.priority, refOrigin: pkt.origin, refSeq: pkt.seq, path: [base.id] };
+    base.seen.add(key(ack));
+    enqueue(base, ack);
+  }
+
+  // ---------- sending an SOS ----------
+  function nearestNode(x, y, maxDist, aliveOnly) {
+    let best = null, bestD = Infinity;
+    for (const n of S.nodes) {
+      if (aliveOnly && !n.alive) continue;
+      const d = Math.hypot(n.x - x, n.y - y);
+      if (d < bestD) { best = n; bestD = d; }
+    }
+    return best && bestD <= maxDist ? { node: best, dist: bestD } : null;
+  }
+  function form() {
+    const prio = Number(document.querySelector('input[name="prio"]:checked').value);
+    const people = Math.min(255, Math.max(1, Number(document.getElementById("people").value) || 1));
+    return { priority: prio, etype: Number(document.getElementById("etype").value), people,
+      landmark: landmark16(document.getElementById("landmark").value.trim()) };
+  }
+  function sendSOS(x, y, report, quiet = false) {
+    const hit = nearestNode(x, y, CFG.wifiReach, true);
+    if (!hit) {
+      S.rings.push({ x, y, start: S.now, end: S.now + 1.2, colour: "--muted", miss: true });
+      if (!quiet) announce(`No working node within ${CFG.wifiReach} m of that spot. Nodes sit at gathering points, so move closer to one.`);
+      return;
+    }
+    const node = hit.node;
+    const rec = { origin: node.id, seq: ++node.seq, px: x, py: y, dist: hit.dist, status: "sending",
+      attempts: 1, createdAt: S.now, ...report };
+    S.sos.push(rec);
+    S.stats.sent++;
+    const pkt = { type: "SOS", origin: node.id, seq: rec.seq, attempt: 1, hopLimit: CFG.hopLimit,
+      hopCount: 0, priority: rec.priority, etype: rec.etype, people: rec.people,
+      landmark: rec.landmark, path: [node.id] };
+    if (!quiet) announce(`${PRIO[rec.priority]} SOS handed to node ${node.id} (${Math.round(hit.dist)} m away).`);
+    if (node.base) {
+      S.incidents.set(`${node.id}:${rec.seq}`, { rec, hops: 0, path: [node.id], at: S.now, attempt: 1 });
+      rec.status = "confirmed"; renderDash(); return;
+    }
+    node.seen.add(key(pkt));
+    enqueue(node, pkt);
+    at(S.now + CFG.ackTimeout, () => checkAck(rec, pkt));
+  }
+  function checkAck(rec, firstPkt) {
+    const node = S.nodes[rec.origin];
+    if (rec.status === "confirmed" || !node.alive) return;
+    if (rec.attempts >= CFG.maxAttempts) {
+      rec.status = "failed"; S.stats.fail++;
+      announce(`SOS near node ${rec.origin} gave up after ${CFG.maxAttempts} tries: no working route to the base.`);
+      return;
+    }
+    rec.attempts++;
+    rec.status = "retrying";
+    announce(`No confirmation yet for the SOS near node ${rec.origin}. Sending again (try ${rec.attempts} of ${CFG.maxAttempts}).`);
+    const retry = { ...firstPkt, attempt: rec.attempts, hopCount: 0, hopLimit: CFG.hopLimit, path: [node.id] };
+    node.seen.add(key(retry));
+    enqueue(node, retry);
+    const wait = CFG.ackTimeout * 2 ** (rec.attempts - 1) + rand(0, CFG.ackTimeout * 0.25);
+    at(S.now + wait, () => checkAck(rec, firstPkt));
+  }
+  function crowd() {
+    const mix = [3, 3, 3, 2, 2, 2, 1, 1, 0, 0];
+    const types = { 3: [1, 2, 5], 2: [3, 4], 1: [6], 0: [6] };
+    const marks = ["Near temple", "Opp. bus stop", "Community hall", "Water tank", "Ration shop", "Blue gate, Ln 3"];
+    const live = S.nodes.filter((n) => n.alive && !n.base);
+    if (!live.length) { announce("No working nodes left to send from."); return; }
+    for (let i = 0; i < 20; i++) {
+      at(S.now + rand(0, 10), () => {
+        const pool = S.nodes.filter((n) => n.alive && !n.base);
+        if (!pool.length) return;
+        const n = pool[Math.floor(Math.random() * pool.length)];
+        const a = rand(0, 2 * Math.PI), r = rand(0, CFG.wifiReach * 0.8);
+        const p = mix[Math.floor(Math.random() * mix.length)];
+        sendSOS(n.x + r * Math.cos(a), n.y + r * Math.sin(a), {
+          priority: p, etype: types[p][Math.floor(Math.random() * types[p].length)],
+          people: 1 + Math.floor(Math.random() * 8), landmark: marks[Math.floor(Math.random() * marks.length)] }, true);
+      });
+    }
+    announce("20 people send an SOS over the next 10 seconds. Watch critical ones jump the queue.");
+  }
+  function toggleNode(x, y) {
+    const hit = nearestNode(x, y, 150, false);
+    if (!hit) { announce("Click closer to a node to destroy or repair it."); return; }
+    const n = hit.node;
+    if (n.base) { announce("The base station stays up in this demo."); return; }
+    n.alive = !n.alive;
+    if (!n.alive) { n.outbox = []; n.txScheduled = false; }
+    announce(n.alive ? `Node ${n.id} repaired.` : `Node ${n.id} destroyed. New SOS messages will route around it.`);
+  }
+
+  // ---------- drawing ----------
+  const canvas = document.getElementById("map");
+  const ctx = canvas.getContext("2d");
+  let colours = {}, size = 600, dpr = 1;
+  const cursor = { x: 1200, y: 600, show: false };
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  function readColours() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const v of ["--map", "--ink", "--muted", "--line", "--grid", "--link", "--critical", "--urgent",
+      "--supplies", "--safe", "--ack", "--dead", "--focus", "--bg"]) colours[v] = cs.getPropertyValue(v).trim();
+  }
+  readColours();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColours);
+  new MutationObserver(readColours).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = window.devicePixelRatio || 1;
+    size = rect.width;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.width * dpr);
+  }
+  new ResizeObserver(resize).observe(canvas);
+  const sx = (x) => ((x - WORLD.min) / (WORLD.max - WORLD.min)) * size;
+  const sy = (y) => ((WORLD.max - y) / (WORLD.max - WORLD.min)) * size;
+  const toWorld = (px, py) => [WORLD.min + (px / size) * (WORLD.max - WORLD.min),
+    WORLD.max - (py / size) * (WORLD.max - WORLD.min)];
+  const metres = (m) => (m / (WORLD.max - WORLD.min)) * size;
+
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = colours["--map"]; ctx.fillRect(0, 0, size, size);
+    // grid every 200 m
+    ctx.strokeStyle = colours["--grid"]; ctx.lineWidth = 1;
+    for (let g = -200; g <= 2600; g += 200) {
+      ctx.beginPath(); ctx.moveTo(sx(g), 0); ctx.lineTo(sx(g), size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, sy(g)); ctx.lineTo(size, sy(g)); ctx.stroke();
+    }
+    // scale bar
+    ctx.strokeStyle = colours["--muted"]; ctx.fillStyle = colours["--muted"]; ctx.lineWidth = 2;
+    const bx = 12, by = size - 14;
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + metres(500), by); ctx.stroke();
+    ctx.font = `${Math.max(10, size / 60)}px "IBM Plex Sans", system-ui, sans-serif`;
+    ctx.fillText("500 m", bx, by - 5);
+    // Wi-Fi reach
+    if (document.getElementById("reach").value === "1") {
+      ctx.fillStyle = colours["--focus"]; ctx.globalAlpha = 0.07;
+      for (const n of S.nodes) if (n.alive) { ctx.beginPath(); ctx.arc(sx(n.x), sy(n.y), metres(CFG.wifiReach), 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    }
+    // links
+    ctx.strokeStyle = colours["--link"]; ctx.lineWidth = 1;
+    for (const a of S.nodes) for (const b of a.nbrs) if (a.id < b.id && a.alive && b.alive) {
+      ctx.beginPath(); ctx.moveTo(sx(a.x), sy(a.y)); ctx.lineTo(sx(b.x), sy(b.y)); ctx.stroke();
+    }
+    // selected incident route
+    const inc = S.selected && S.incidents.get(S.selected);
+    if (inc) {
+      ctx.strokeStyle = colours[PRIO_VAR[inc.rec.priority]]; ctx.lineWidth = 4; ctx.lineJoin = "round";
+      ctx.beginPath();
+      inc.path.forEach((id, i) => { const n = S.nodes[id]; i ? ctx.lineTo(sx(n.x), sy(n.y)) : ctx.moveTo(sx(n.x), sy(n.y)); });
+      ctx.stroke();
+    }
+    // people
+    for (const r of S.sos) {
+      const n = S.nodes[r.origin];
+      const c = r.status === "failed" ? colours["--dead"] : colours[PRIO_VAR[r.priority]];
+      ctx.setLineDash([3, 3]); ctx.strokeStyle = c; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(sx(r.px), sy(r.py)); ctx.lineTo(sx(n.x), sy(n.y)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(sx(r.px), sy(r.py), 5, 0, 7);
+      if (r.status === "confirmed") { ctx.fillStyle = c; ctx.fill(); }
+      else { ctx.fillStyle = colours["--map"]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = c; ctx.stroke(); }
+      if (r.status === "confirmed") {
+        ctx.strokeStyle = colours["--map"]; ctx.lineWidth = 1.6; ctx.beginPath();
+        ctx.moveTo(sx(r.px) - 2.5, sy(r.py)); ctx.lineTo(sx(r.px) - 0.5, sy(r.py) + 2); ctx.lineTo(sx(r.px) + 2.8, sy(r.py) - 2.2); ctx.stroke();
+      }
+    }
+    // transmissions
+    for (const g of S.rings) {
+      const k = Math.min(1, (S.now - g.start) / (g.end - g.start));
+      ctx.strokeStyle = colours[g.colour]; ctx.lineWidth = 2;
+      ctx.globalAlpha = 1 - k;
+      ctx.beginPath(); ctx.arc(sx(g.x), sy(g.y), g.miss ? 6 + 18 * k : 9 + (reduceMotion.matches ? 0 : 10 * k), 0, 7); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    for (const f of S.flights) {
+      const k = Math.min(1, (S.now - f.start) / (f.end - f.start));
+      ctx.fillStyle = colours[f.colour];
+      ctx.beginPath(); ctx.arc(sx(f.x1 + (f.x2 - f.x1) * k), sy(f.y1 + (f.y2 - f.y1) * k), 3.5, 0, 7); ctx.fill();
+    }
+    // nodes
+    const fs = Math.max(10, size / 58);
+    ctx.font = `${fs}px "IBM Plex Sans", system-ui, sans-serif`;
+    for (const n of S.nodes) {
+      const x = sx(n.x), y = sy(n.y);
+      if (n.base) {
+        ctx.fillStyle = colours["--ink"]; ctx.fillRect(x - 9, y - 9, 18, 18);
+        ctx.fillStyle = colours["--bg"]; ctx.font = `600 ${fs * 0.8}px "IBM Plex Sans", system-ui, sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("B", x, y + 0.5);
+        ctx.font = `${fs}px "IBM Plex Sans", system-ui, sans-serif`;
+      } else if (!n.alive) {
+        ctx.strokeStyle = colours["--dead"]; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x - 7, y - 7); ctx.lineTo(x + 7, y + 7); ctx.moveTo(x + 7, y - 7); ctx.lineTo(x - 7, y + 7); ctx.stroke();
+      } else {
+        ctx.fillStyle = colours["--map"]; ctx.strokeStyle = colours["--ink"]; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.stroke();
+        if (n.outbox.length) { ctx.fillStyle = colours[PRIO_VAR[n.outbox[0].pkt.priority]] || colours["--ack"];
+          if (n.outbox[0].pkt.type === "ACK") ctx.fillStyle = colours["--ack"];
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill(); }
+      }
+      ctx.fillStyle = n.alive ? colours["--ink"] : colours["--dead"];
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(String(n.id), x + 10, y - 8);
+    }
+    // keyboard cursor
+    if (cursor.show) {
+      ctx.strokeStyle = colours["--focus"]; ctx.lineWidth = 2;
+      const x = sx(cursor.x), y = sy(cursor.y);
+      ctx.beginPath(); ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y); ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 10); ctx.stroke();
+    }
+  }
+
+  // ---------- dashboard ----------
+  const dash = document.getElementById("dash");
+  function renderDash() {
+    const items = [...S.incidents.entries()].sort((a, b) => b[1].rec.priority - a[1].rec.priority || a[1].at - b[1].at);
+    document.getElementById("dash-empty").hidden = items.length > 0;
+    dash.replaceChildren(...items.map(([id, inc]) => {
+      const r = inc.rec, n = S.nodes[r.origin], [lat, lon] = toLatLon(n.x, n.y);
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.style.setProperty("--c", `var(${PRIO_VAR[r.priority]})`);
+      b.setAttribute("aria-pressed", String(S.selected === id));
+      const sender = r.status === "confirmed" ? "Sender has confirmation" : "Confirmation on its way";
+      b.innerHTML = `<span class="inc-title"></span><span></span><span class="inc-meta"></span><span class="inc-meta"></span>`;
+      const [t, loc, meta, demo] = b.children;
+      t.textContent = `${PRIO[r.priority]}: ${ETYPE[r.etype]}, ${r.people} ${r.people === 1 ? "person" : "people"}`;
+      loc.textContent = `Node ${n.id} at ${lat}, ${lon}${r.landmark ? `, "${r.landmark}"` : ""}`;
+      meta.textContent = `${inc.hops} hop${inc.hops === 1 ? "" : "s"}, ${(inc.at - r.createdAt).toFixed(1)} s, send ${inc.attempt}. ${sender}.`;
+      demo.textContent = `Demo only: clicked spot was ${Math.round(r.dist)} m from the node.`;
+      b.addEventListener("click", () => { S.selected = id; renderDash(); });
+      li.append(b);
+      return li;
+    }));
+  }
+
+  // ---------- status and stats ----------
+  const statusEl = document.getElementById("status");
+  function announce(msg) { statusEl.textContent = msg; }
+  const el = (id) => document.getElementById(id);
+  function renderStats() {
+    el("s-time").textContent = `${S.now.toFixed(1)} s`;
+    el("s-sent").textContent = S.stats.sent;
+    el("s-deliv").textContent = S.incidents.size;
+    el("s-tx").textContent = S.stats.tx;
+    el("s-dup").textContent = S.stats.dup;
+    el("s-fail").textContent = S.stats.fail;
+  }
+
+  // ---------- input ----------
+  let mode = "sos";
+  function act(x, y) { mode === "sos" ? sendSOS(x, y, form()) : toggleNode(x, y); }
+  function updateReadout(x, y) {
+    const [lat, lon] = toLatLon(x, y);
+    el("ptr").textContent = `${lat}, ${lon}`;
+    const hit = nearestNode(x, y, Infinity, true);
+    el("near").textContent = hit ? `${hit.node.id === 0 ? "base" : "node " + hit.node.id}, ${Math.round(hit.dist)} m${hit.dist > CFG.wifiReach ? " (out of Wi-Fi reach)" : ""}` : "none";
+  }
+  canvas.addEventListener("click", (e) => {
+    const r = canvas.getBoundingClientRect();
+    const [x, y] = toWorld(e.clientX - r.left, e.clientY - r.top);
+    cursor.x = x; cursor.y = y; act(x, y);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    const [x, y] = toWorld(e.clientX - r.left, e.clientY - r.top);
+    updateReadout(x, y);
+  });
+  canvas.addEventListener("focus", () => { cursor.show = true; updateReadout(cursor.x, cursor.y); });
+  canvas.addEventListener("blur", () => { cursor.show = false; });
+  canvas.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 200 : 50;
+    const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+    if (moves[e.key]) {
+      e.preventDefault();
+      cursor.x = Math.min(WORLD.max, Math.max(WORLD.min, cursor.x + moves[e.key][0]));
+      cursor.y = Math.min(WORLD.max, Math.max(WORLD.min, cursor.y + moves[e.key][1]));
+      updateReadout(cursor.x, cursor.y);
+    } else if (e.key === "Enter") { e.preventDefault(); act(cursor.x, cursor.y); }
+  });
+  canvas.addEventListener("keyup", (e) => { if (e.key === " ") { e.preventDefault(); act(cursor.x, cursor.y); } });
+  canvas.addEventListener("keydown", (e) => { if (e.key === " ") e.preventDefault(); });
+
+  function setMode(m) {
+    mode = m;
+    el("modeSos").setAttribute("aria-pressed", String(m === "sos"));
+    el("modeKill").setAttribute("aria-pressed", String(m === "kill"));
+  }
+  el("modeSos").addEventListener("click", () => setMode("sos"));
+  el("modeKill").addEventListener("click", () => setMode("kill"));
+  el("crowd").addEventListener("click", crowd);
+  let paused = false;
+  el("pause").addEventListener("click", () => {
+    paused = !paused;
+    el("pause").setAttribute("aria-pressed", String(paused));
+    el("pause").textContent = paused ? "Resume" : "Pause";
+  });
+  el("reset").addEventListener("click", () => {
+    S = freshState(); renderDash(); renderStats(); announce("Network reset. All nodes working.");
+  });
+
+  // ---------- main loop ----------
+  S = freshState();
+  renderDash();
+  let last = performance.now();
+  function frame(t) {
+    const dt = Math.min(0.05, (t - last) / 1000);
+    last = t;
+    if (!paused) {
+      const target = S.now + dt * Number(el("speed").value);
+      while (S.q.size && S.q.peek().t <= target) { const e = S.q.pop(); S.now = e.t; e.fn(); }
+      S.now = target;
+      S.flights = S.flights.filter((f) => f.end > S.now);
+      S.rings = S.rings.filter((g) => g.end > S.now);
+    }
+    if (size > 0) draw();
+    renderStats();
+    requestAnimationFrame(frame);
+  }
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
