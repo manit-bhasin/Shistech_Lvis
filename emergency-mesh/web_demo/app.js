@@ -12,6 +12,8 @@
   const KEY_STEP_M = 50;
   const KEY_STEP_SHIFT_M = 200;
   const MISS_MARK_MS = 1200;
+  const PERSON_R = 5;        // person dot radius, CSS px
+  const PERSON_HALO = 6.5;   // map-coloured ring around it
   const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
   const PRIORITY_TOKENS = { 3: "--critical", 2: "--urgent", 1: "--supplies", 0: "--safe" };
   const COLOUR_TOKENS = ["--bg", "--map", "--ink", "--muted", "--grid", "--link", "--focus",
@@ -92,6 +94,29 @@
     return sos.status === "failed" ? colours["--destroyed"] : priorityColour(sos.priority);
   }
 
+  // Where to draw a person, in CSS pixels: at the clicked spot, or, when that spot is so close to
+  // the node that the dot would cover the node's circle, square or X, pushed out just clear of it.
+  function personSpot(sos, nodeR) {
+    const node = sim.nodes[sos.origin];
+    const nx = sx(node.x);
+    const ny = sy(node.y);
+    const x = sx(sos.x);
+    const y = sy(sos.y);
+    const marker = node.isBase ? (nodeR + 2) * Math.SQRT2 : node.alive ? nodeR + 1 : nodeR * Math.SQRT2 + 1.5;
+    const clear = marker + PERSON_HALO + 1;
+    const d = Math.hypot(x - nx, y - ny);
+    if (d >= clear) return { x, y };
+    const ux = d > 2 ? (x - nx) / d : 0;  // a click on the node itself goes straight below it
+    const uy = d > 2 ? (y - ny) / d : 1;
+    return { x: nx + ux * clear, y: ny + uy * clear };
+  }
+
+  function circleHitsRect(cx, cy, r, x, y, w, h) {
+    const dx = cx - Math.min(Math.max(cx, x), x + w);
+    const dy = cy - Math.min(Math.max(cy, y), y + h);
+    return dx * dx + dy * dy < r * r;
+  }
+
   function circle(x, y, r) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -162,13 +187,14 @@
     }
 
     // Dashed line from each person to their node (the dots themselves are drawn after the nodes).
+    const people = Array.from(sim.sos.values(), (sos) => ({ sos, ...personSpot(sos, nodeR) }));
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
-    for (const sos of sim.sos.values()) {
-      const node = sim.nodes[sos.origin];
-      ctx.strokeStyle = personColour(sos);
+    for (const p of people) {
+      const node = sim.nodes[p.sos.origin];
+      ctx.strokeStyle = personColour(p.sos);
       ctx.beginPath();
-      ctx.moveTo(sx(sos.x), sy(sos.y));
+      ctx.moveTo(p.x, p.y);
       ctx.lineTo(sx(node.x), sy(node.y));
       ctx.stroke();
     }
@@ -230,23 +256,16 @@
           ctx.fill();
         }
       }
-      ctx.fillStyle = n.alive ? colours["--ink"] : colours["--destroyed"];
-      ctx.font = `${labelPx}px ${FONT}`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
-      ctx.fillText(String(n.id), x + nodeR + 3, y - nodeR - 1);
     }
 
-    // People, on top of the nodes so a click right next to a node stays visible:
-    // hollow while sending, filled with a check mark when confirmed, grey if it failed.
-    for (const sos of sim.sos.values()) {
+    // People: hollow while sending, filled with a check mark when confirmed, grey if it failed.
+    // Drawn above the routes and nodes, but never on a node's own marker (see personSpot).
+    for (const { sos, x, y } of people) {
       const colour = personColour(sos);
-      const x = sx(sos.x);
-      const y = sy(sos.y);
-      ctx.fillStyle = colours["--map"];  // halo that separates the dot from a node or route below
-      circle(x, y, 6.5);
+      ctx.fillStyle = colours["--map"];  // halo that separates the dot from a route below
+      circle(x, y, PERSON_HALO);
       ctx.fill();
-      circle(x, y, 5);
+      circle(x, y, PERSON_R);
       if (sos.status === "confirmed") {
         ctx.fillStyle = colour;
         ctx.fill();
@@ -262,6 +281,32 @@
         ctx.lineWidth = 2;
         ctx.stroke();
       }
+    }
+
+    // Node IDs last, outlined in the map colour so a route never hides them. Each ID sits up and to
+    // the right of its node, or in the first other corner that none of its people's dots cover.
+    ctx.font = `${labelPx}px ${FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = colours["--map"];
+    const ascent = labelPx * 0.75;
+    for (const n of sim.nodes) {
+      const text = String(n.id);
+      const w = ctx.measureText(text).width;
+      const x = sx(n.x);
+      const y = sy(n.y);
+      const corners = [
+        [x + nodeR + 3, y - nodeR - 1], [x - nodeR - 3 - w, y - nodeR - 1],
+        [x + nodeR + 3, y + nodeR + 1 + ascent], [x - nodeR - 3 - w, y + nodeR + 1 + ascent],
+      ];
+      const mine = people.filter((p) => p.sos.origin === n.id);
+      const [lx, ly] = corners.find(([cx, cy]) => !mine.some((p) =>
+        circleHitsRect(p.x, p.y, PERSON_HALO, cx - 1.5, cy - ascent - 1.5, w + 3, ascent + 3))) || corners[0];
+      ctx.strokeText(text, lx, ly);
+      ctx.fillStyle = n.alive ? colours["--ink"] : colours["--destroyed"];
+      ctx.fillText(text, lx, ly);
     }
 
     // Clicks with no working node in Wi-Fi reach.
@@ -368,14 +413,19 @@
     const current = ui.dashboard.children;
     const sameOrder = items.length === current.length && items.every((li, i) => current[i] === li);
     if (!sameOrder) {
-      const focused = document.activeElement;
+      const active = document.activeElement;
+      const focused = active !== ui.dashboard && ui.dashboard.contains(active) ? active : null;
+      const focusedTop = focused ? focused.getBoundingClientRect().top : 0;
       const scrollTop = ui.dashboard.scrollTop;
       ui.dashboard.replaceChildren(...items);
-      // Moving a focused button drops its focus and resets the list's scroll; restore both.
-      if (focused && focused !== document.activeElement && ui.dashboard.contains(focused)) {
-        focused.focus({ preventScroll: true });
+      if (focused) {
+        // Moving a focused button drops its focus and resets the list's scroll. Give focus back and
+        // keep that incident where it was on screen, even when a new one was inserted above it.
+        if (document.activeElement !== focused) focused.focus({ preventScroll: true });
+        ui.dashboard.scrollTop += focused.getBoundingClientRect().top - focusedTop;
+      } else {
+        ui.dashboard.scrollTop = scrollTop;
       }
-      ui.dashboard.scrollTop = scrollTop;
     }
   }
 

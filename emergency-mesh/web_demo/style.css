@@ -223,7 +223,6 @@ legend,
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--muted);
   border-radius: 6px;
-  overflow: hidden;
 }
 
 .segmented input {
@@ -244,6 +243,11 @@ legend,
 
 .segmented label:first-of-type {
   border-left: 0;
+  border-radius: 5px 0 0 5px;
+}
+
+.segmented label:last-of-type {
+  border-radius: 0 5px 5px 0;
 }
 
 .segmented input:checked + label {
@@ -252,16 +256,18 @@ legend,
   font-weight: 600;
 }
 
+/* The ring sits outside the segment: it never covers the label, and the gap keeps it visible
+   on Supplies, whose colour equals --focus. */
 .segmented input:focus-visible + label {
+  position: relative;
+  z-index: 1;
   outline: 3px solid var(--focus);
-  outline-offset: -3px;
-  /* A gap between ring and fill keeps the ring visible on Supplies, whose colour equals --focus. */
-  box-shadow: inset 0 0 0 5px var(--panel);
+  outline-offset: 2px;
 }
 
 @media (max-width: 374px) {
   .segmented label {
-    font-size: 0.78rem;  /* keeps bold "Supplies" clear of the focus ring on narrow phones */
+    font-size: 0.75rem;  /* lets bold "Supplies" fit its segment on narrow phones */
   }
 }
 
