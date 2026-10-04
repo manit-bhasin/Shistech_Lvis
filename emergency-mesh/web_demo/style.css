@@ -255,6 +255,8 @@ legend,
 .segmented input:focus-visible + label {
   outline: 3px solid var(--focus);
   outline-offset: -3px;
+  /* A gap between ring and fill keeps the ring visible on Supplies, whose colour equals --focus. */
+  box-shadow: inset 0 0 0 6px var(--panel);
 }
 
 .field-row {
@@ -347,8 +349,9 @@ button[aria-pressed="true"] {
   display: grid;
   gap: 6px;
   max-height: 28rem;
-  margin: 0;
-  padding: 0;
+  /* Room inside the scrolling list for the 2px offset + 3px focus outline, without shifting the layout. */
+  margin: -5px;
+  padding: 5px;
   overflow-y: auto;
   list-style: none;
 }
