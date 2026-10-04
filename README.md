@@ -5,6 +5,8 @@
 **Built by a team from LVISG for SHISTECH (SDG track).**
 Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 
+**Live demo:** https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/
+
 ## Where to find each judging criterion
 
 | Criterion | Points | Where to look |
@@ -13,7 +15,7 @@ Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 | Technical Execution | 20 | Section 3 (simulator, results and 16 automated tests), Section 5 (protocol), the interactive demo |
 | Design & Presentation | 20 | Section 2 (designed for someone in a panic), Section 7 (phone SOS page), the interactive demo |
 | Problem-Solving & Thinking Skills | 15 | Section 8 (challenges and how we solved them), Section 3.5 (testing our own assumptions) |
-| Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`/simulation/results`](simulation/results) |
+| Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`/simulation/results`](emergency-mesh/simulation/results) |
 
 ---
 
@@ -21,11 +23,11 @@ Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 
 | Part | Status | Where |
 |---|---|---|
-| Mesh logic: message IDs, duplicate dropping, hop limits, priority queue, random delays, listen-before-talk, delivery confirmations, retries, rate limits, heartbeats | **Built and tested** in a Python network simulator (16 automated tests) | [`/simulation`](simulation) |
-| Disaster scenarios: rerouting, node failures, mass SOS, dead-node detection, sensitivity to radio assumptions | **Built**, results in Section 3 | [`/simulation/results`](simulation/results) |
-| Packet format (max 31 bytes) and LoRa time-on-air | **Built** | [`protocol.py`](simulation/meshsim/protocol.py) |
-| Node interface: OLED screen, SOS button, status LED | **Built** in the Wokwi ESP32 simulator (MicroPython) | [`/wokwi_node`](wokwi_node), [live project](https://wokwi.com/projects/476841677745845249) |
-| Interactive map demo: click anywhere to send an SOS, destroy or repair nodes, simulate a crowd | **Built**, runs in any web browser | [`/web_demo`](web_demo) |
+| Mesh logic: message IDs, duplicate dropping, hop limits, priority queue, random delays, listen-before-talk, delivery confirmations, retries, rate limits, heartbeats | **Built and tested** in a Python network simulator (16 automated tests) | [`/simulation`](emergency-mesh/simulation) |
+| Disaster scenarios: rerouting, node failures, mass SOS, dead-node detection, sensitivity to radio assumptions | **Built**, results in Section 3 | [`/simulation/results`](emergency-mesh/simulation/results) |
+| Packet format (max 31 bytes) and LoRa time-on-air | **Built** | [`protocol.py`](emergency-mesh/simulation/meshsim/protocol.py) |
+| Node interface: OLED screen, SOS button, status LED | **Built** in the Wokwi ESP32 simulator (MicroPython) | [`/wokwi_node`](emergency-mesh/wokwi_node), [live project](https://wokwi.com/projects/476841677745845249) |
+| Interactive map demo: click anywhere to send an SOS, destroy or repair nodes, simulate a crowd | **Built**, runs in any web browser | [`/web_demo`](emergency-mesh/web_demo) |
 | Rescue dashboard | **Prototype**: priority-sorted incident table from the simulator (also saved as CSV) | `python run.py demo` |
 | ESP32 firmware with LoRa radio | **Designed**, not built | Sections 5–6 |
 | Wi-Fi SOS page for phones | **Designed**, not built | Section 7 |
@@ -95,7 +97,7 @@ All results below use random seed 7. We repeated the tests with seeds 3 and 11: 
 
 A critical SOS travels `1 → 6 → 7 → 8 → base`. Relay 7 is then destroyed, and the next SOS from the same place automatically takes `1 → 6 → 11 → 12 → base`.
 
-![Topology](simulation/results/demo_topology.png)
+![Topology](emergency-mesh/simulation/results/demo_topology.png)
 
 Rescue dashboard from the same run (sample Chennai coordinates):
 
@@ -121,7 +123,7 @@ Random relays are destroyed, then every surviving node sends one SOS within 30 s
 | 40% | 280 | 81.1% | 81.1% | 100% | 80.0% | 3.5 s |
 | 50% | 240 | 69.2% | 69.2% | 100% | 68.8% | 2.5 s |
 
-![Failures](simulation/results/failures.png)
+![Failures](emergency-mesh/simulation/results/failures.png)
 
 "Physically reachable" means a chain of surviving nodes (within 6 hops) still connects the sender to the base. The network delivered **99.7–100% of reachable messages**; almost all losses came from nodes being cut off completely, which only more nodes can fix. The slowest 5% of messages took about 5 minutes, because their early attempts collided in the initial rush and had to be resent.
 
@@ -137,7 +139,7 @@ N SOS messages from random nodes within one minute, no nodes destroyed. 5 random
 | 200 | 86.4% | 62.3% | 97.5 s | 110.5 s | 159.9 s | 209.4 s |
 | 500 | 79.0% | 28.6% | 114.4 s | 302.2 s | 618.5 s | 1013.7 s |
 
-![Load](simulation/results/load.png)
+![Load](emergency-mesh/simulation/results/load.png)
 
 - **Under heavy load, priority works:** at 500 messages, critical SOS arrived in a median of about 2 minutes; "I'm safe" check-ins waited about 17.
 - **This is the system's main weakness.** Every message travels through every node, so a mass event causes heavy collisions: 40–50 collision events per SOS at 100+ messages. Delivery within an hour falls to 79% at 500 messages. Section 10 lists the planned fix.
@@ -171,7 +173,7 @@ We re-ran the failure test (Section 3.2) with other values for radio range and r
 - **Packet loss barely matters** (0–10%), because retries and multiple paths cover lost packets.
 - **Range matters a lot.** At 500 m, nodes 600 m apart can't hear each other at all. The protocol still delivered 99.5–100% of reachable messages in every case, but **nodes must be placed closer together than their real range.** In a real deployment, spacing comes from range measured on site.
 
-Full table, including 0% destroyed for every setting: `simulation/results/sensitivity.csv`.
+Full table, including 0% destroyed for every setting: `emergency-mesh/simulation/results/sensitivity.csv`.
 
 ---
 
@@ -209,7 +211,7 @@ Full table, including 0% destroyed for every setting: `simulation/results/sensit
 | 3 SOS per phone per 10 minutes | Lets someone update their SOS but stops one phone flooding the network |
 | Heartbeat 15 min, alert at 30 min | An alert needs two missed heartbeats, so one lost packet doesn't cause a false alarm |
 
-**Test scenarios (our choices):** the 30-second and 1-minute sending windows, the load-test priority mix (30% critical, 30% urgent, 20% supplies, 20% "I'm safe"), and the number of random networks per row (limited by running time). Each is a parameter in [`scenarios.py`](simulation/meshsim/scenarios.py).
+**Test scenarios (our choices):** the 30-second and 1-minute sending windows, the load-test priority mix (30% critical, 30% urgent, 20% supplies, 20% "I'm safe"), and the number of random networks per row (limited by running time). Each is a parameter in [`scenarios.py`](emergency-mesh/simulation/meshsim/scenarios.py).
 
 ---
 
@@ -232,7 +234,7 @@ Full table, including 0% destroyed for every setting: `simulation/results/sensit
 
 An SOS is at most **31 bytes**. ACKs name the `(origin, seq)` they confirm; heartbeats carry battery voltage, uptime and neighbour count.
 
-**Forwarding rules** (implemented in [`node.py`](simulation/meshsim/node.py)):
+**Forwarding rules** (implemented in [`node.py`](emergency-mesh/simulation/meshsim/node.py)):
 1. Drop any message ID already seen.
 2. Forward only while `hop_limit > 1`.
 3. Always send the highest-priority waiting packet first.
@@ -288,7 +290,7 @@ Parts have not been bought; cost per node will be added after purchase.
 | SOS button (internal pull-up) | GPIO 14 |
 | RGB LED, red / green / blue | GPIO 27 / 32 / 33 |
 
-Green LED and "ONLINE" while idle. Pressing the button shows "SIGNAL RECEIVED / RELAYING" (blue), then "DANGER" with the node's stored location (red), a sample Chennai coordinate. Relaying here is only a display; the mesh logic is in `/simulation`.
+Green LED and "ONLINE" while idle. Pressing the button shows "SIGNAL RECEIVED / RELAYING" (blue), then "DANGER" with the node's stored location (red), a sample Chennai coordinate. Relaying here is only a display; the mesh logic is in `/emergency-mesh/simulation`.
 
 ---
 
@@ -346,9 +348,16 @@ Our approach: work out who needs help and what stops them, design the system, si
 
 ## 11. Running the project
 
-**Interactive demo:** open `web_demo/index.html` in any browser; nothing to install. Click near a node to send an SOS and watch it hop to the base, then see it appear on the rescue dashboard with the node's location and landmark. You can also destroy nodes to watch messages reroute, cut a node off completely to watch it retry, or send 20 SOS within 10 seconds to watch critical messages jump the queue.
+**Interactive demo:** open the [live demo](https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/), or double-click `emergency-mesh/web_demo/index.html` to open it in any browser; nothing to install, and it works offline. The page loads `style.css`, `mesh.js` (the simulation engine) and `app.js` (map, controls and dashboard) from the same folder, so keep the four files together. Click near a node to send an SOS and watch it hop to the base, then see it appear on the rescue dashboard with the node's location and landmark. You can also destroy nodes to watch messages reroute, cut a node off completely to watch it retry, or send 20 SOS within 10 seconds to watch critical messages jump the queue.
 
 The demo uses the same layout and forwarding rules as the Python simulator, but leaves out radio collisions, listen-before-talk and random packet loss so each hop is easy to follow. The Python simulator below models all three, and all results in Section 3 come from it.
+
+The demo's engine has its own automated tests (Node 20 or newer; no packages to install):
+
+```bash
+cd emergency-mesh/web_demo
+node --test
+```
 
 **Simulator:**
 
@@ -356,7 +365,7 @@ The demo uses the same layout and forwarding rules as the Python simulator, but 
 Tested with Python 3.12. Charts need matplotlib; everything else uses the standard library.
 
 ```bash
-cd simulation
+cd emergency-mesh/simulation
 pip install -r requirements.txt     # for charts
 python run.py all                   # every scenario; tables, CSVs and charts go to results/
 python run.py demo                  # rerouting demo + rescue dashboard
@@ -365,6 +374,8 @@ python -m unittest                  # 16 automated tests
 ```
 
 On Windows, use `py` if `python` isn't recognised. Options: `--range`, `--sf`, `--loss`, `--trials`, `--seed`, `--no-charts`. With the same seed and Python version, results are identical.
+
+All project files are in the `emergency-mesh/` folder:
 
 ```
 simulation/
@@ -377,7 +388,12 @@ simulation/
     visualize.py      charts
   tests/              automated tests
   results/            CSVs and charts from the last run
-web_demo/index.html   interactive map demo (open in a browser)
+web_demo/
+  index.html          interactive map demo (double-click to open)
+  style.css           styles, light and dark
+  mesh.js             simulation engine (no DOM, so it also runs in Node)
+  app.js              map drawing, controls, rescue dashboard
+  tests/mesh.test.js  engine tests (node --test)
 wokwi_node/main.py    node interface (MicroPython, Wokwi)
 ```
 
@@ -398,4 +414,4 @@ This system **complements, not replaces**, cellular, satellite and official emer
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](emergency-mesh/LICENSE).

@@ -5,6 +5,8 @@
 **Built by a team from LVISG for SHISTECH (SDG track).**
 Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 
+**Live demo:** https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/
+
 ---
 
 ## Project status
