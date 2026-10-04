@@ -137,10 +137,17 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 18px;
+  min-height: calc(2 * 1.45em + 4px);  /* no jump when "(out of Wi-Fi reach)" wraps the line */
   margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 369px) {
+  .readout {
+    min-height: calc(3 * 1.45em + 8px);  /* on narrow phones the nearest-node text can take two lines */
+  }
 }
 
 .readout strong {
@@ -288,6 +295,7 @@ select,
 input[type="text"],
 input[type="number"] {
   width: 100%;
+  height: calc(1.45em + 14px);  /* selects ignore line-height; keep every control the same height */
   padding: 6px 8px;
   border: 1px solid var(--muted);
   border-radius: 4px;
@@ -317,6 +325,10 @@ button {
   cursor: pointer;
 }
 
+#pause {
+  min-width: 6.5em;  /* fits "Resume", so the row never re-wraps when the label changes */
+}
+
 button[aria-pressed="true"] {
   border-color: var(--ink);
   background: var(--ink);
@@ -324,7 +336,7 @@ button[aria-pressed="true"] {
 }
 
 .status {
-  min-height: 2.9em;
+  min-height: 4.35em;  /* three lines: the longest message wraps to three on phones */
   margin: 12px 0 0;
   font-size: 0.9rem;
 }
@@ -344,8 +356,13 @@ button[aria-pressed="true"] {
   font-size: 0.8rem;
 }
 
+.stats > div {
+  display: flex;
+  flex-direction: column;
+}
+
 .stats dd {
-  margin: 0;
+  margin: auto 0 0;  /* values line up along the row even when some labels wrap */
   font-size: 1.05rem;
   font-weight: 500;
 }

@@ -45,6 +45,7 @@
   let activeTx = [];       // transmissions still on air, for animation
   let missMarks = [];      // clicks with no node in reach, shown briefly
   let selectedKey = null;  // incident whose route is highlighted
+  let userPicked = false;  // once someone picks an incident, new arrivals no longer take the highlight
   let knownIncidents = 0;
   let dashboardState = "";
   const dashboardItems = new Map();
@@ -379,6 +380,7 @@
     demo.textContent = `Demo only: clicked spot was ${Math.round(sos.distance)} m from the node.`;
     button.addEventListener("click", () => {
       selectedKey = incident.key;
+      userPicked = true;
       syncDashboard();
     });
     li.append(button);
@@ -390,12 +392,12 @@
   function syncDashboard() {
     if (sim.incidents.size > knownIncidents) {
       knownIncidents = sim.incidents.size;
-      selectedKey = Array.from(sim.incidents.keys()).pop();  // newest arrival
+      if (!userPicked) selectedKey = Array.from(sim.incidents.keys()).pop();  // default: newest arrival
     }
     const incidents = Array.from(sim.incidents.values())
       .sort((a, b) => b.priority - a.priority || a.receivedAt - b.receivedAt);
-    const confirmed = (incident) => sim.sos.get(incident.key).status === "confirmed";
-    const state = incidents.map((i) => i.key + (confirmed(i) ? "+" : "-")).join(",") + "|" + selectedKey;
+    const status = (incident) => sim.sos.get(incident.key).status;
+    const state = incidents.map((i) => i.key + status(i)[0]).join(",") + "|" + selectedKey;
     if (state === dashboardState) return;
     dashboardState = state;
 
@@ -404,7 +406,8 @@
       const item = dashboardItem(incident);
       const hops = `${incident.hops} hop${incident.hops === 1 ? "" : "s"}`;
       const delay = (incident.receivedAt - incident.createdAt).toFixed(1);
-      const sender = confirmed(incident) ? "Sender has confirmation." : "Confirmation on its way.";
+      const sender = { confirmed: "Sender has confirmation.", sending: "Confirmation on its way.",
+        failed: "Sender gave up waiting for confirmation." }[status(incident)];
       item.meta.textContent = `${hops}, ${delay} s, send ${incident.attempt}. ${sender}`;
       item.button.setAttribute("aria-pressed", String(incident.key === selectedKey));
     }
@@ -423,6 +426,9 @@
         // keep that incident where it was on screen, even when a new one was inserted above it.
         if (document.activeElement !== focused) focused.focus({ preventScroll: true });
         ui.dashboard.scrollTop += focused.getBoundingClientRect().top - focusedTop;
+        // While the list is too short to scroll, move the page instead.
+        const rest = focused.getBoundingClientRect().top - focusedTop;
+        if (Math.abs(rest) > 0.5) window.scrollBy(0, rest);
       } else {
         ui.dashboard.scrollTop = scrollTop;
       }
@@ -546,6 +552,7 @@
     activeTx = [];
     missMarks = [];
     selectedKey = null;
+    userPicked = false;
     knownIncidents = 0;
     dashboardState = "";
     dashboardItems.clear();
@@ -583,7 +590,11 @@
   readColours();
   darkScheme.addEventListener("change", readColours);
   resize();
-  new ResizeObserver(resize).observe(canvas);
+  // Resizing clears the canvas, and this callback runs after the frame was drawn, so redraw here.
+  new ResizeObserver(() => {
+    resize();
+    if (size > 0) draw(performance.now());
+  }).observe(canvas);
   syncDashboard();
   requestAnimationFrame(frame);
 })();
