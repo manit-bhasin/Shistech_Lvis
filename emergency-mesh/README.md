@@ -279,9 +279,16 @@ Green LED and "ONLINE" while idle. Pressing the button shows "SIGNAL RECEIVED / 
 
 ## 10. Running the project
 
-**Interactive demo:** open `web_demo/index.html` in any browser; nothing to install. Click near a node to send an SOS and watch it hop to the base, then see it appear on the rescue dashboard with the node's location and landmark. You can also destroy nodes to watch messages reroute, cut a node off completely to watch it retry, or send 20 SOS within 10 seconds to watch critical messages jump the queue.
+**Interactive demo:** double-click `web_demo/index.html` to open it in any browser; nothing to install, and it works offline. The page loads `style.css`, `mesh.js` (the simulation engine) and `app.js` (map, controls and dashboard) from the same folder, so keep the four files together. Click near a node to send an SOS and watch it hop to the base, then see it appear on the rescue dashboard with the node's location and landmark. You can also destroy nodes to watch messages reroute, cut a node off completely to watch it retry, or send 20 SOS within 10 seconds to watch critical messages jump the queue.
 
 The demo uses the same layout and forwarding rules as the Python simulator, but leaves out radio collisions, listen-before-talk and random packet loss so each hop is easy to follow. The Python simulator below models all three, and all results in Section 3 come from it.
+
+The demo's engine has its own automated tests (Node 20 or newer; no packages to install):
+
+```bash
+cd web_demo
+node --test
+```
 
 **Simulator:**
 
@@ -310,7 +317,12 @@ simulation/
     visualize.py      charts
   tests/              automated tests
   results/            CSVs and charts from the last run
-web_demo/index.html   interactive map demo (open in a browser)
+web_demo/
+  index.html          interactive map demo (double-click to open)
+  style.css           styles, light and dark
+  mesh.js             simulation engine (no DOM, so it also runs in Node)
+  app.js              map drawing, controls, rescue dashboard
+  tests/mesh.test.js  engine tests (node --test)
 wokwi_node/main.py    node interface (MicroPython, Wokwi)
 ```
 
