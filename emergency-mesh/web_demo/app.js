@@ -88,6 +88,10 @@
     return pkt.type === "ACK" ? colours["--confirmation"] : priorityColour(pkt.priority);
   }
 
+  function personColour(sos) {
+    return sos.status === "failed" ? colours["--destroyed"] : priorityColour(sos.priority);
+  }
+
   function circle(x, y, r) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -157,38 +161,18 @@
       ctx.lineCap = "butt";
     }
 
-    // People: hollow while sending, filled with a check mark when confirmed, grey if it failed.
+    // Dashed line from each person to their node (the dots themselves are drawn after the nodes).
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
     for (const sos of sim.sos.values()) {
       const node = sim.nodes[sos.origin];
-      const colour = sos.status === "failed" ? colours["--destroyed"] : priorityColour(sos.priority);
-      const x = sx(sos.x);
-      const y = sy(sos.y);
-      ctx.strokeStyle = colour;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = personColour(sos);
       ctx.beginPath();
-      ctx.moveTo(x, y);
+      ctx.moveTo(sx(sos.x), sy(sos.y));
       ctx.lineTo(sx(node.x), sy(node.y));
       ctx.stroke();
-      ctx.setLineDash([]);
-      circle(x, y, 5);
-      if (sos.status === "confirmed") {
-        ctx.fillStyle = colour;
-        ctx.fill();
-        ctx.strokeStyle = colours["--map"];
-        ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.moveTo(x - 2.5, y);
-        ctx.lineTo(x - 0.5, y + 2);
-        ctx.lineTo(x + 2.8, y - 2.2);
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = colours["--map"];
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
     }
+    ctx.setLineDash([]);
 
     // Transmissions: a dot travels along each link for the packet's airtime, plus a ring at the sender.
     for (const tx of activeTx) {
@@ -251,6 +235,33 @@
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
       ctx.fillText(String(n.id), x + nodeR + 3, y - nodeR - 1);
+    }
+
+    // People, on top of the nodes so a click right next to a node stays visible:
+    // hollow while sending, filled with a check mark when confirmed, grey if it failed.
+    for (const sos of sim.sos.values()) {
+      const colour = personColour(sos);
+      const x = sx(sos.x);
+      const y = sy(sos.y);
+      ctx.fillStyle = colours["--map"];  // halo that separates the dot from a node or route below
+      circle(x, y, 6.5);
+      ctx.fill();
+      circle(x, y, 5);
+      if (sos.status === "confirmed") {
+        ctx.fillStyle = colour;
+        ctx.fill();
+        ctx.strokeStyle = colours["--map"];
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(x - 2.5, y);
+        ctx.lineTo(x - 0.5, y + 2);
+        ctx.lineTo(x + 2.8, y - 2.2);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
     }
 
     // Clicks with no working node in Wi-Fi reach.
@@ -358,11 +369,13 @@
     const sameOrder = items.length === current.length && items.every((li, i) => current[i] === li);
     if (!sameOrder) {
       const focused = document.activeElement;
+      const scrollTop = ui.dashboard.scrollTop;
       ui.dashboard.replaceChildren(...items);
-      // Moving a focused button drops its focus; give it back.
+      // Moving a focused button drops its focus and resets the list's scroll; restore both.
       if (focused && focused !== document.activeElement && ui.dashboard.contains(focused)) {
         focused.focus({ preventScroll: true });
       }
+      ui.dashboard.scrollTop = scrollTop;
     }
   }
 
@@ -401,9 +414,12 @@
     if (mode === "sos") Mesh.sendSOS(sim, x, y, readReport());
     else Mesh.toggleNode(sim, x, y);
     syncMessages();
+    updateReadout(x, y);  // a destroyed or repaired node changes the nearest one; a tap has no pointer move
   }
 
+  let readoutAt = null;  // last spot shown in the readout, refreshed after Reset
   function updateReadout(x, y) {
+    readoutAt = { x, y };
     const { lat, lon } = Mesh.toLatLon(x, y);
     setText(ui.pointer, `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
     const hit = Mesh.nearestNode(sim, x, y, Infinity, true);
@@ -485,6 +501,7 @@
     dashboardItems.clear();
     ui.dashboard.replaceChildren();
     syncMessages();
+    if (readoutAt) updateReadout(readoutAt.x, readoutAt.y);
   });
   ui.speed.addEventListener("change", () => {
     speed = Number(ui.speed.value);

@@ -256,7 +256,13 @@ legend,
   outline: 3px solid var(--focus);
   outline-offset: -3px;
   /* A gap between ring and fill keeps the ring visible on Supplies, whose colour equals --focus. */
-  box-shadow: inset 0 0 0 6px var(--panel);
+  box-shadow: inset 0 0 0 5px var(--panel);
+}
+
+@media (max-width: 374px) {
+  .segmented label {
+    font-size: 0.78rem;  /* keeps bold "Supplies" clear of the focus ring on narrow phones */
+  }
 }
 
 .field-row {
@@ -352,6 +358,7 @@ button[aria-pressed="true"] {
   /* Room inside the scrolling list for the 2px offset + 3px focus outline, without shifting the layout. */
   margin: -5px;
   padding: 5px;
+  scroll-padding-block: 5px;  /* same room when Tab scrolls an item into view */
   overflow-y: auto;
   list-style: none;
 }
