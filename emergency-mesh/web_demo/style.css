@@ -1,45 +1,53 @@
-/* Emergency mesh demo. The canvas in app.js reads the same colour tokens. */
+/* Emergency mesh demo. The canvas in app.js reads the same colour tokens.
+   Look: a field survey sheet. Pale map paper, pine ink, signage headings, a radio-log dashboard. */
 
 :root {
   color-scheme: light;
-  --bg: #e9eef1;
-  --panel: #f7f9fa;
-  --map: #f2f5f7;
-  --ink: #17242e;
-  --muted: #56656f;
-  --line: #c9d4db;
-  --grid: #dde5ea;
-  --link: #a9b8c2;
-  --focus: #2c66a6;
-  --critical: #c2302a;
-  --urgent: #b8650f;
-  --supplies: #2c66a6;
-  --safe: #687884;
-  --confirmation: #23855a;
-  --destroyed: #8a969e;
-  --on-accent: #ffffff;  /* text on a priority colour */
+  --bg: #eceee7;           /* page: survey paper */
+  --panel: #f7f8f3;
+  --map: #f9faf6;
+  --ink: #1b2420;          /* pine ink */
+  --muted: #5b655e;
+  --line: #d5d9cf;
+  --grid: #e9ece3;
+  --grid-major: #d7dccf;
+  --link: #a8b2a6;
+  --focus: #1f5f8b;
+  --critical: #c8331f;
+  --urgent: #b8650a;
+  --supplies: #1f5f8b;
+  --safe: #69736c;
+  --confirmation: #1e8455;
+  --destroyed: #9aa197;
+  --on-accent: #ffffff;    /* text on a priority colour */
+  --shadow: 0 1px 2px rgb(27 36 32 / 6%), 0 8px 24px -12px rgb(27 36 32 / 18%);
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Signage face: Bahnschrift (Windows) and DIN Alternate (macOS) ship with the system. */
+  --font-display: Bahnschrift, "DIN Alternate", "DIN Next", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #0f171d;
-    --panel: #16212a;
-    --map: #121c23;
-    --ink: #dce5ea;
-    --muted: #93a3ad;
-    --line: #2c3c47;
-    --grid: #1c2932;
-    --link: #3b4f5c;
-    --focus: #6aa5e8;
-    --critical: #f0605a;
-    --urgent: #f0a04a;
-    --supplies: #6aa5e8;
-    --safe: #9aabb6;
-    --confirmation: #4cc38a;
-    --destroyed: #5d6c76;
-    --on-accent: #0f171d;
+    --bg: #0f1512;
+    --panel: #151d19;
+    --map: #121a16;
+    --ink: #e2e8e1;
+    --muted: #98a49b;
+    --line: #26322c;
+    --grid: #18211d;
+    --grid-major: #222d27;
+    --link: #34443b;
+    --focus: #7db3e0;
+    --critical: #f0645a;
+    --urgent: #eea04c;
+    --supplies: #7db3e0;
+    --safe: #a3ada5;
+    --confirmation: #5ccb93;
+    --destroyed: #5f6b64;
+    --on-accent: #0f1512;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 28px -14px rgb(0 0 0 / 60%);
   }
 }
 
@@ -80,67 +88,150 @@ body {
   border: 0;
 }
 
-/* ---------------------------------------------------------------- layout */
+/* ---------------------------------------------------------------- header */
 
 .page-header,
 .layout {
-  max-width: 1240px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-inline: 16px;
 }
 
 .page-header {
-  padding-block: 20px 14px;
+  display: grid;
+  gap: 4px 32px;
+  padding-block: 20px 16px;
+}
+
+@media (min-width: 900px) {
+  /* Title on the left, the one-line explanation on the right: the whole map fits a 900 px-tall laptop screen. */
+  .page-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+  }
+
+  .page-header .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .page-header .intro {
+    margin: 0 0 3px;
+  }
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* A small transmitting dot: the one splash of signal red outside the map. */
+.eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--critical);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--critical) 22%, transparent);
 }
 
 h1 {
-  margin: 0 0 4px;
-  font-size: 1.6rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 2.5rem);
   font-weight: 600;
-  line-height: 1.2;
+  font-stretch: condensed;
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
 .intro {
-  margin: 0;
-  max-width: 72ch;
+  margin: 4px 0 0;
+  max-width: 68ch;
   color: var(--muted);
 }
+
+/* ---------------------------------------------------------------- layout */
 
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
-  padding-bottom: 32px;
+  padding-bottom: 40px;
 }
 
 @media (min-width: 900px) {
   .layout {
-    grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
+    gap: 24px;
+  }
+
+  /* The map stays in view while the panel scrolls past it, and is never taller than the screen. */
+  .map-column {
+    position: sticky;
+    top: 12px;
+    width: min(100%, max(440px, calc(100vh - 64px)));
   }
 }
 
-/* ------------------------------------------------------------------- map */
+/* -------------------------------------------------------- map (the sheet) */
+
+.sheet {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sheet-bar {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sheet-bar strong {
+  color: var(--ink);
+  font-weight: 600;
+}
 
 #map {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
   background: var(--map);
-  border: 1px solid var(--line);
-  border-radius: 6px;
   cursor: crosshair;
   touch-action: manipulation;
+}
+
+.sheet-foot {
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--line);
 }
 
 .readout {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 18px;
+  gap: 4px 20px;
   min-height: calc(2 * 1.45em + 4px);  /* no jump when "(out of Wi-Fi reach)" wraps the line */
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -152,6 +243,8 @@ h1 {
 
 .readout strong {
   color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
@@ -159,7 +252,7 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 16px;
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
   color: var(--muted);
@@ -187,30 +280,31 @@ h1 {
 /* ----------------------------------------------------------------- panel */
 
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0 16px;
+  display: grid;
+  gap: 12px;
 }
 
 .panel section {
-  padding: 14px 0;
-  border-top: 1px solid var(--line);
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
-.panel section:first-child {
-  border-top: 0;
-}
-
+/* Section headings read like labels on a form or a log book. */
 h2 {
-  margin: 0 0 10px;
-  font-size: 1rem;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 fieldset {
   min-width: 0;
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   padding: 0;
   border: 0;
 }
@@ -218,18 +312,20 @@ fieldset {
 legend,
 .field label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   padding: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
 }
 
 .segmented {
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border: 1px solid var(--muted);
-  border-radius: 6px;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg);
+  border-radius: 8px;
 }
 
 .segmented input {
@@ -241,26 +337,39 @@ legend,
 }
 
 .segmented label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 7px 2px;
-  border-left: 1px solid var(--line);
+  border-radius: 6px;
   text-align: center;
   font-size: 0.85rem;
   cursor: pointer;
 }
 
-.segmented label:first-of-type {
-  border-left: 0;
-  border-radius: 5px 0 0 5px;
+/* A dot in the priority's colour, so the four options read as a key before one is picked. */
+.segmented label::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c);
 }
 
-.segmented label:last-of-type {
-  border-radius: 0 5px 5px 0;
+.segmented label:hover {
+  background: var(--panel);
 }
 
 .segmented input:checked + label {
   background: var(--c);
   color: var(--on-accent);
   font-weight: 600;
+}
+
+.segmented input:checked + label::before {
+  background: var(--on-accent);
 }
 
 /* The ring sits outside the segment: it never covers the label, and the gap keeps it visible
@@ -276,6 +385,10 @@ legend,
   .segmented label {
     font-size: 0.75rem;  /* lets bold "Supplies" fit its segment on narrow phones */
   }
+
+  .segmented label::before {
+    display: none;
+  }
 }
 
 .field-row {
@@ -283,25 +396,31 @@ legend,
   grid-template-columns: minmax(0, 1fr) 88px;
   align-items: end;  /* controls line up even when one label wraps */
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .field-row-even {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);  /* room for "20× (for retries)" */
-  margin: 12px 0 0;
+  margin: 14px 0 0;
 }
 
 select,
 input[type="text"],
 input[type="number"] {
   width: 100%;
-  height: calc(1.45em + 14px);  /* selects ignore line-height; keep every control the same height */
-  padding: 6px 8px;
-  border: 1px solid var(--muted);
-  border-radius: 4px;
+  height: calc(1.45em + 16px);  /* selects ignore line-height; keep every control the same height */
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
   background: var(--map);
   color: var(--ink);
   font: inherit;
+}
+
+select:hover,
+input[type="text"]:hover,
+input[type="number"]:hover {
+  border-color: var(--muted);
 }
 
 .button-row {
@@ -315,14 +434,19 @@ input[type="number"] {
 }
 
 button {
-  padding: 7px 12px;
-  border: 1px solid var(--muted);
-  border-radius: 4px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
   background: var(--map);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   cursor: pointer;
+  transition: background-color 120ms, border-color 120ms;
+}
+
+button:hover {
+  border-color: var(--muted);
 }
 
 #pause {
@@ -335,10 +459,23 @@ button[aria-pressed="true"] {
   color: var(--bg);
 }
 
+#crowd {
+  border-color: color-mix(in srgb, var(--critical) 45%, var(--line));
+  color: var(--critical);
+  font-weight: 600;
+}
+
+#crowd:hover {
+  background: color-mix(in srgb, var(--critical) 8%, var(--map));
+}
+
+/* The narrator: what just happened on the map. */
 .status {
   min-height: 4.35em;  /* three lines: the longest message wraps to three on phones */
-  margin: 12px 0 0;
-  font-size: 0.9rem;
+  margin: 14px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+  font-size: 0.875rem;
 }
 
 /* ------------------------------------------------------------- statistics */
@@ -346,14 +483,14 @@ button[aria-pressed="true"] {
 .stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px 12px;
+  gap: 14px 12px;
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .stats dt {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .stats > div {
@@ -363,8 +500,11 @@ button[aria-pressed="true"] {
 
 .stats dd {
   margin: auto 0 0;  /* values line up along the row even when some labels wrap */
-  font-size: 1.05rem;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-stretch: condensed;
+  line-height: 1.15;
 }
 
 @media (max-width: 359px) {
@@ -373,12 +513,16 @@ button[aria-pressed="true"] {
   }
 }
 
-/* -------------------------------------------------------------- dashboard */
+/* ------------------------------------------------- dashboard (radio log) */
 
 .empty {
   margin: 0;
+  padding: 18px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 .incidents {
@@ -395,11 +539,14 @@ button[aria-pressed="true"] {
 
 .incident {
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
   border-left: 4px solid var(--c);
+  border-radius: 6px;
+  background: var(--map);
   text-align: left;
   font-size: 0.85rem;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .incident span {
@@ -410,22 +557,30 @@ button[aria-pressed="true"] {
   font-weight: 600;
 }
 
+.incident-where {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
 .incident-meta,
 .incident-demo {
   color: var(--muted);
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
 
 .incident[aria-pressed="true"] {
   border-color: var(--c);
-  background: var(--map);
+  background: color-mix(in srgb, var(--c) 7%, var(--map));
   color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--c);
 }
 
 /* ------------------------------------------------------------------ about */
 
-.about {
+.panel section.about {
+  background: transparent;
+  border-style: dashed;
   color: var(--muted);
   font-size: 0.85rem;
 }
@@ -436,4 +591,15 @@ button[aria-pressed="true"] {
 
 .about p:last-child {
   margin-bottom: 0;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
 }

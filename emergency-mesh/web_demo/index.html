@@ -11,27 +11,31 @@
 </head>
 <body>
   <header class="page-header">
-    <h1>Emergency mesh: live demo</h1>
+    <p class="eyebrow">Live demo · LVISG · SHISTECH</p>
+    <h1>Emergency mesh</h1>
     <p class="intro">Click anywhere on the map to send an SOS from that spot. The nearest node picks it up over Wi-Fi, and it hops node to node over LoRa until it reaches the rescue base in the centre.</p>
   </header>
 
   <main class="layout">
-    <div class="map-column">
+    <div class="map-column sheet">
+      <p class="sheet-bar"><span><strong>Field map</strong> · 24 nodes and a rescue base</span><span>3.1 km square · north up</span></p>
       <canvas id="map" role="application" tabindex="0"
         aria-label="Map of the mesh network: 24 nodes and the rescue base in the centre"
         aria-describedby="map-help"></canvas>
       <p id="map-help" class="visually-hidden">Arrow keys move a crosshair 50 metres, or 200 metres with Shift. Enter or Space acts at the crosshair: it sends an SOS, or destroys or repairs the nearest node, depending on the mode chosen under "Clicking the map will". The pointer readout below the map follows the crosshair.</p>
-      <p class="readout">
-        <span>Pointer: <strong id="pointer">move over the map</strong></span>
-        <span>Nearest node: <strong id="nearest">–</strong></span>
-      </p>
-      <ul class="legend" aria-label="Colour legend">
-        <li><span class="swatch" data-priority="3"></span>Critical</li>
-        <li><span class="swatch" data-priority="2"></span>Urgent</li>
-        <li><span class="swatch" data-priority="1"></span>Supplies</li>
-        <li><span class="swatch" data-priority="0"></span>I'm safe</li>
-        <li><span class="swatch swatch-confirmation"></span>Confirmation back to the sender</li>
-      </ul>
+      <div class="sheet-foot">
+        <p class="readout">
+          <span>Pointer: <strong id="pointer">move over the map</strong></span>
+          <span>Nearest node: <strong id="nearest">–</strong></span>
+        </p>
+        <ul class="legend" aria-label="Colour legend">
+          <li><span class="swatch" data-priority="3"></span>Critical</li>
+          <li><span class="swatch" data-priority="2"></span>Urgent</li>
+          <li><span class="swatch" data-priority="1"></span>Supplies</li>
+          <li><span class="swatch" data-priority="0"></span>I'm safe</li>
+          <li><span class="swatch swatch-confirmation"></span>Confirmation back to the sender</li>
+        </ul>
+      </div>
     </div>
 
     <div class="panel">

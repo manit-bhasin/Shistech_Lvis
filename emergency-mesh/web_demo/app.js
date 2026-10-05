@@ -14,9 +14,10 @@
   const MISS_MARK_MS = 1200;
   const PERSON_R = 5;        // person dot radius, CSS px
   const PERSON_HALO = 6.5;   // map-coloured ring around it
-  const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  const MAJOR_GRID_M = 1000;
+  const FONT = 'ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace';
   const PRIORITY_TOKENS = { 3: "--critical", 2: "--urgent", 1: "--supplies", 0: "--safe" };
-  const COLOUR_TOKENS = ["--bg", "--map", "--ink", "--muted", "--grid", "--link", "--focus",
+  const COLOUR_TOKENS = ["--bg", "--map", "--ink", "--muted", "--grid", "--grid-major", "--link", "--focus",
     "--critical", "--urgent", "--supplies", "--safe", "--confirmation", "--destroyed"];
 
   const $ = (id) => document.getElementById(id);
@@ -130,15 +131,36 @@
     ctx.fillStyle = colours["--map"];
     ctx.fillRect(0, 0, size, size);
 
-    // Grid every 200 m.
-    ctx.strokeStyle = colours["--grid"];
-    ctx.lineWidth = 1;
+    // Survey-sheet grid: a line every 200 m, a darker one every kilometre, and ticks on the edges.
+    for (const major of [false, true]) {
+      ctx.strokeStyle = colours[major ? "--grid-major" : "--grid"];
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let g = Math.ceil(WORLD_MIN / GRID_STEP_M) * GRID_STEP_M; g <= WORLD_MAX; g += GRID_STEP_M) {
+        if ((g % MAJOR_GRID_M === 0) !== major) continue;
+        const p = Math.round(sx(g)) + 0.5;
+        const q = Math.round(sy(g)) + 0.5;
+        ctx.moveTo(p, 0);
+        ctx.lineTo(p, size);
+        ctx.moveTo(0, q);
+        ctx.lineTo(size, q);
+      }
+      ctx.stroke();
+    }
+    ctx.strokeStyle = colours["--muted"];
     ctx.beginPath();
     for (let g = Math.ceil(WORLD_MIN / GRID_STEP_M) * GRID_STEP_M; g <= WORLD_MAX; g += GRID_STEP_M) {
-      ctx.moveTo(sx(g), 0);
-      ctx.lineTo(sx(g), size);
-      ctx.moveTo(0, sy(g));
-      ctx.lineTo(size, sy(g));
+      const len = g % MAJOR_GRID_M === 0 ? 7 : 3;
+      const p = Math.round(sx(g)) + 0.5;
+      const q = Math.round(sy(g)) + 0.5;
+      ctx.moveTo(p, 0);
+      ctx.lineTo(p, len);
+      ctx.moveTo(p, size);
+      ctx.lineTo(p, size - len);
+      ctx.moveTo(0, q);
+      ctx.lineTo(len, q);
+      ctx.moveTo(size, q);
+      ctx.lineTo(size - len, q);
     }
     ctx.stroke();
 
