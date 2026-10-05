@@ -414,4 +414,4 @@ This system **complements, not replaces**, cellular, satellite and official emer
 
 ## License
 
-MIT. See [LICENSE](emergency-mesh/LICENSE).
+MIT. See [LICENSE](LICENSE).
