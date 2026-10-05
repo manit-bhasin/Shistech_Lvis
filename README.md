@@ -1,9 +1,8 @@
 # Emergency Communication Network (ESP32 + LoRa Mesh)
 
-> A low-cost mesh of ESP32 nodes that lets **anyone with an ordinary phone** send a structured SOS to a rescue base when mobile towers and internet are down. No app, no SIM, no internet needed.
+> Low-cost ESP32 radio nodes that let anyone with an ordinary phone send an SOS to a rescue base when the mobile towers and the internet are down. The phone needs no app, SIM card or signal.
 
-**Built by a team from LVISG for SHISTECH (SDG track).**
-Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
+Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH SDG track.
 
 **Live demo:** https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/
 
@@ -13,7 +12,7 @@ Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 |---|---|---|
 | Innovation & Impact | 20 | Section 1 (the problem, from real Indian disasters), Section 2 (what is new), Section 12 (SDGs) |
 | Technical Execution | 20 | Section 3 (simulator, results and 16 automated tests), Section 5 (protocol), the interactive demo |
-| Design & Presentation | 20 | Section 2 (designed for someone in a panic), Section 7 (phone SOS page), the interactive demo |
+| Design & Presentation | 20 | Section 2 (the SOS page, built for someone in a hurry), Section 7 (phone SOS page), the interactive demo |
 | Problem-Solving & Thinking Skills | 15 | Section 8 (challenges and how we solved them), Section 3.5 (testing our own assumptions) |
 | Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`emergency-mesh/simulation/results/`](emergency-mesh/simulation/results) |
 
@@ -69,24 +68,24 @@ Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 
 ## 1. The problem
 
-Disasters damage mobile networks or cut their power, exactly when people most need to call for help.
+When a cyclone, flood or landslide hits, mobile towers get damaged or lose power, and the people who need rescuing can't call anyone.
 
 - **Cyclone Michaung, Chennai (December 2023).** After the storm, Tamil Nadu's Chief Secretary reported that 70% of Chennai's 42,747 cell towers were operational, so roughly 30% were still down. One resident told Business Standard she had no way to contact rescue teams without a network. ([Outlook India](https://www.outlookindia.com/amp/story/national/michaung-cyclone-live-chennai-india-news-tamil-nadu-cyclone-name-news-334622), [Business Standard](https://www.business-standard.com/india-news/cyclone-michaung-chennai-residents-battle-power-mobile-disruption-123120500994_1.html))
 - **Wayanad landslides (July 2024).** Telecom operators had to restore connectivity "on a war footing", and BSNL installed diesel engines so towers could keep working without grid power. ([Deccan Herald](https://www.deccanherald.com/india/keralam/telecom-operators-restore-augment-telecom-connectivity-in-landslide-hit-wayanad-3133367))
 - **Satellite SOS is not an option for most Indians yet.** Recent reporting says satellite emergency messaging on iPhones is unavailable in India due to telecom licensing. ([Karmactive](https://www.karmactive.com/apple-satellite-emergency-sos-iphone-14-15-16-india-eligibility/))
 
-**The gap:** in the first hours after a disaster, before towers are restored, ordinary people need a way to send "where I am, what's wrong, how many of us" to someone who can act.
+In the first hours, before the towers come back, people need some way to tell a rescue team three things: where they are, what's wrong, and how many of them there are.
 
 ---
 
 ## 2. How the system works
 
-1. **Nodes are pre-installed at known gathering points:** schools, relief camps, community halls, water tanks, high ground. Each has a battery and optional solar panel.
-2. **A person joins the node's Wi-Fi** (`SOS-HELP-<place>`) and an SOS page opens automatically, with no internet or app needed. Without a phone, they press the node's SOS button.
-3. **They choose:** emergency type, number of people, injured/trapped flags, and a short landmark.
-4. **The SOS hops node to node over LoRa radio** to a rescue base station.
-5. **The base lists incidents by priority** and sends a confirmation back, so the sender sees **"Delivered to rescue base."**
-6. **Every node sends regular heartbeats**, so a dead node is noticed before a disaster, not during one.
+1. Nodes are installed in advance at places people already gather: schools, relief camps, community halls, water tanks, high ground. Each has a battery and optional solar panel.
+2. A person joins the node's Wi-Fi (`SOS-HELP-<place>`) and an SOS page opens automatically, with no internet or app needed. Without a phone, they press the node's SOS button.
+3. They pick the emergency type, number of people, injured/trapped flags, and a short landmark.
+4. The SOS hops from node to node over LoRa radio until it reaches the rescue base station.
+5. The base lists incidents by priority and sends a confirmation back, and the sender's screen changes to "Delivered to rescue base."
+6. Every node sends a heartbeat every 15 minutes, so the base finds out about a dead node long before anyone needs it.
 
 ```mermaid
 flowchart LR
@@ -100,27 +99,27 @@ flowchart LR
     B -- USB --> L[Laptop: incident list]
 ```
 
-**Designed for someone in a panic.** The phone page is designed but not built yet; the interactive demo shows the full flow.
-- No app, account or internet: the page opens by itself when the phone joins the node's Wi-Fi.
+**The SOS page.** It is designed but not built yet (the interactive demo shows the whole flow). The person using it may be scared, hurt or in the dark, so:
+- There is no app, account or internet involved. The page opens by itself when the phone joins the node's Wi-Fi.
 - Four large priority buttons; typing a landmark is optional.
-- A clear "Delivered to rescue base" confirmation, so nobody is left guessing.
+- Once the base confirms, the page says "Delivered to rescue base".
 - A physical SOS button on the node for people without a phone.
 - English and Hindi.
 
-**Relation to Meshtastic.** [Meshtastic](https://meshtastic.org) is an established open-source LoRa mesh messaging project, and an inspiration for ours. In its typical setup, each user carries their own node paired to a phone app over Bluetooth. ([explainer](https://e2japan.com/radio/guides/meshtastic-explained)) Our design is built specifically for disaster SOS: victims need **no device of their own**, messages are **structured and prioritised**, and the rescue side gets an **incident list** rather than a chat.
+**How this differs from Meshtastic.** [Meshtastic](https://meshtastic.org) is an open-source LoRa mesh messaging project, and it gave us the idea. In its usual setup each user carries their own node, paired to a phone app over Bluetooth ([explainer](https://e2japan.com/radio/guides/meshtastic-explained)). Ours does one job, disaster SOS: the person in trouble doesn't need a device of their own, every message has a fixed format with a priority, and the rescue team gets a sorted incident list instead of a chat.
 
 ---
 
 ## 3. Simulation results
 
-The simulator recreates **25 nodes** on a 5 × 5 grid, about 600 m apart (2.4 km × 2.4 km), with the rescue base at the centre. Every node runs the rules planned for the ESP32 firmware. Section 4 explains where every number comes from.
+The simulator places 25 nodes on a 5 × 5 grid, about 600 m apart (2.4 km × 2.4 km), with the rescue base at the centre. Every node runs the rules planned for the ESP32 firmware. Section 4 explains where every number comes from.
 
-**How the simulator works:**
-- **Event-driven:** every send, wait and arrival is a timed event, so runs with tens of thousands of radio transmissions replay exactly from the same seed.
-- **Real radio timing:** each packet's time on air comes from the LoRa formula in Semtech's SX1276 datasheet.
-- **Radio effects:** overlapping transmissions destroy each other at a receiver, a node can't receive while it is sending, and some packets are lost at random.
-- **Real packets:** messages are encoded byte by byte in the format planned for the ESP32 (at most 31 bytes).
-- **16 automated tests** cover the packet format, airtime, forwarding, duplicate dropping, hop limit, rerouting, retries, priority order, rate limit, collisions, heartbeats and reachability.
+How the simulator works:
+- Every send, wait and arrival is a timed event, so runs with tens of thousands of radio transmissions replay exactly from the same seed.
+- Each packet's time on air comes from the LoRa formula in Semtech's SX1276 datasheet.
+- Overlapping transmissions destroy each other at a receiver, a node can't receive while it is sending, and some packets are lost at random.
+- Messages are encoded byte by byte in the format planned for the ESP32 (at most 31 bytes).
+- 16 automated tests cover the packet format, airtime, forwarding, duplicate dropping, hop limit, rerouting, retries, priority order, rate limit, collisions, heartbeats and reachability.
 
 All results below use random seed 7. We repeated the tests with seeds 3 and 11: exact numbers shift (most of all how many nodes stay reachable when many are destroyed, since that depends on which ones go), but the main conclusions held: the network delivered 99.7–100% of reachable messages, critical SOS stayed much faster than "I'm safe" messages under heavy load, and every dead node was detected.
 
@@ -156,7 +155,7 @@ Random relays are destroyed, then every surviving node sends one SOS within 30 s
 
 ![Failures](emergency-mesh/simulation/results/failures.png)
 
-"Physically reachable" means a chain of surviving nodes (within 6 hops) still connects the sender to the base. The network delivered **99.7–100% of reachable messages**; almost all losses came from nodes being cut off completely, which only more nodes can fix. The slowest 5% of messages took about 5 minutes, because their early attempts collided in the initial rush and had to be resent.
+"Physically reachable" means a chain of surviving nodes (within 6 hops) still connects the sender to the base. The network delivered 99.7–100% of the messages that could still reach the base. Almost all losses came from nodes being cut off completely, which only more nodes can fix. The slowest 5% of messages took about 5 minutes, because their early attempts collided in the initial rush and had to be resent.
 
 ### 3.3 Many people sending SOS at once
 
@@ -172,8 +171,8 @@ N SOS messages from random nodes within one minute, no nodes destroyed. 5 random
 
 ![Load](emergency-mesh/simulation/results/load.png)
 
-- **Under heavy load, priority works:** at 500 messages, critical SOS arrived in a median of about 2 minutes; "I'm safe" check-ins waited about 17.
-- **This is the system's main weakness.** Every message travels through every node, so a mass event causes heavy collisions: 40–50 collision events per SOS at 100+ messages. Delivery within an hour falls to 79% at 500 messages. Section 10 lists the planned fix.
+- Priority holds up under heavy load: at 500 messages, critical SOS arrived in a median of about 2 minutes; "I'm safe" check-ins waited about 17.
+- Collisions are the system's biggest weakness. Every message travels through every node, so a mass event causes heavy collisions: 40–50 collision events per SOS at 100+ messages. Delivery within an hour falls to 79% at 500 messages. Section 10 lists the planned fix.
 - At light load there's no queue, so priority makes little difference.
 
 ### 3.4 Detecting dead nodes
@@ -201,8 +200,8 @@ We re-ran the failure test (Section 3.2) with other values for radio range and r
 | 800 m | 5% | 30% | 91.5% | 91.5% | 100% |
 | 800 m | 10% | 30% | 91.5% | 91.2% | 99.7% |
 
-- **Packet loss barely matters** (0–10%), because retries and multiple paths cover lost packets.
-- **Range matters a lot.** At 500 m, nodes 600 m apart can't hear each other at all. The protocol still delivered 99.5–100% of reachable messages in every case, but **nodes must be placed closer together than their real range.** In a real deployment, spacing comes from range measured on site.
+- Random packet loss of 0–10% barely changes anything, because retries and multiple paths cover lost packets.
+- Range matters a lot. At 500 m, nodes 600 m apart can't hear each other at all. The protocol still delivered 99.5–100% of reachable messages in every case, but nodes have to be placed closer together than their real range. In a real deployment, spacing comes from range measured on site.
 
 Full table, including 0% destroyed for every setting: `emergency-mesh/simulation/results/sensitivity.csv`.
 
@@ -217,7 +216,7 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 | 865–867 MHz band | De-licensed in India, max 1 W transmit power, 4 W ERP, 200 kHz bandwidth ([DoT notification GSR 564(E)](https://dot.gov.in/sites/default/files/Delicensing%20in%20865-867%20MHz%20band%20%5BGSR%20564%20%28E%29%5D_0.pdf)) |
 | 866.0 MHz | Middle of that band, so a 125 kHz channel fits inside it |
 | SF9, 125 kHz, coding rate 4/5 | SF9 is the suggested starting point for Indian outdoor projects; 125 kHz and 4/5 are the standard settings ([Zbotic SX1276 guide](https://zbotic.in/sx1276-lora-module-range-sensitivity-spreading-factor-guide/)) |
-| **800 m range** | The same guide lists **500 m–1 km at SF9 in dense Indian cities** (Delhi, Mumbai, Bangalore) for an SX1276 at +20 dBm with simple antennas. 800 m sits inside that range; Section 3.5 tests 500–1000 m |
+| 800 m range | The same guide lists 500 m–1 km at SF9 in dense Indian cities (Delhi, Mumbai, Bangalore) for an SX1276 at +20 dBm with simple antennas. 800 m sits inside that range; Section 3.5 tests 500–1000 m |
 | +20 dBm transmit power | The SX1276's maximum (100 mW), which the range figure assumes; well under India's 1 W limit |
 | 200 m phone Wi-Fi reach (interactive demo) | Wi-Fi typically reaches about 200 m in open space and 50–100 m indoors ([Makerguides](https://www.makerguides.com/long-range-communication-with-lora-sx1276-and-esp32/)); nodes sit outdoors at gathering points |
 | 0.25 s per SOS on air | Calculated with the time-on-air formula in Semtech's SX1276 datasheet, for a 31-byte packet at SF9 |
@@ -263,7 +262,7 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 | `session` | 2 B | Short ID of the phone session, for rate limiting |
 | `landmark` | ≤ 16 B | e.g. "Blue gate, Ln 3" (plus 1 length byte) |
 
-An SOS is at most **31 bytes**. ACKs name the `(origin, seq)` they confirm; heartbeats carry battery voltage, uptime and neighbour count.
+An SOS is at most 31 bytes. ACKs name the `(origin, seq)` they confirm; heartbeats carry battery voltage, uptime and neighbour count.
 
 **Forwarding rules** (implemented in [`node.py`](emergency-mesh/simulation/meshsim/node.py)):
 1. Drop any message ID already seen.
@@ -412,7 +411,7 @@ On Windows, use `py` if `python` isn't recognised. Options: `--range`, `--sf`, `
 - **SDG 11, target 11.5:** reduce deaths and people affected by disasters.
 - **SDG 9, target 9.1:** reliable, resilient infrastructure.
 
-This system **complements, not replaces**, cellular, satellite and official emergency systems.
+This system is meant to sit alongside cellular, satellite and official emergency services, for the hours when they are down.
 
 ---
 
