@@ -595,7 +595,9 @@
   function frame(time) {
     const dt = Math.min(0.05, Math.max(0, (time - lastTime) / 1000));  // no big jumps after a hidden tab
     lastTime = time;
-    if (!paused) Mesh.run(sim, sim.now + dt * speed);
+    // The clock waits for the first SOS (or crowd); Reset makes it wait again.
+    const started = sim.stats.sosSent > 0 || sim.queue.length > 0;
+    if (!paused && started) Mesh.run(sim, sim.now + dt * speed);
 
     activeTx = activeTx.concat(sim.transmissions.splice(0)).filter((tx) => tx.end > sim.now);
     for (const miss of sim.misses.splice(0)) missMarks.push({ x: miss.x, y: miss.y, born: time });
