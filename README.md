@@ -15,7 +15,7 @@ Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 | Technical Execution | 20 | Section 3 (simulator, results and 16 automated tests), Section 5 (protocol), the interactive demo |
 | Design & Presentation | 20 | Section 2 (designed for someone in a panic), Section 7 (phone SOS page), the interactive demo |
 | Problem-Solving & Thinking Skills | 15 | Section 8 (challenges and how we solved them), Section 3.5 (testing our own assumptions) |
-| Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`/simulation/results`](emergency-mesh/simulation/results) |
+| Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`emergency-mesh/simulation/results/`](emergency-mesh/simulation/results) |
 
 ---
 
@@ -23,16 +23,47 @@ Team: Manit Bhasin, Divit Rastogi, Rajveer Kapoor.
 
 | Part | Status | Where |
 |---|---|---|
-| Mesh logic: message IDs, duplicate dropping, hop limits, priority queue, random delays, listen-before-talk, delivery confirmations, retries, rate limits, heartbeats | **Built and tested** in a Python network simulator (16 automated tests) | [`/simulation`](emergency-mesh/simulation) |
-| Disaster scenarios: rerouting, node failures, mass SOS, dead-node detection, sensitivity to radio assumptions | **Built**, results in Section 3 | [`/simulation/results`](emergency-mesh/simulation/results) |
+| Mesh logic: message IDs, duplicate dropping, hop limits, priority queue, random delays, listen-before-talk, delivery confirmations, retries, rate limits, heartbeats | **Built and tested** in a Python network simulator (16 automated tests) | [`emergency-mesh/simulation/`](emergency-mesh/simulation) |
+| Disaster scenarios: rerouting, node failures, mass SOS, dead-node detection, sensitivity to radio assumptions | **Built**, results in Section 3 | [`emergency-mesh/simulation/results/`](emergency-mesh/simulation/results) |
 | Packet format (max 31 bytes) and LoRa time-on-air | **Built** | [`protocol.py`](emergency-mesh/simulation/meshsim/protocol.py) |
-| Node interface: OLED screen, SOS button, status LED | **Built** in the Wokwi ESP32 simulator (MicroPython) | [`/wokwi_node`](emergency-mesh/wokwi_node), [live project](https://wokwi.com/projects/476841677745845249) |
-| Interactive map demo: click anywhere to send an SOS, destroy or repair nodes, simulate a crowd | **Built**, runs in any web browser | [`/web_demo`](emergency-mesh/web_demo) |
+| Node interface: OLED screen, SOS button, status LED | **Built** in the Wokwi ESP32 simulator (MicroPython) | [`emergency-mesh/wokwi_node/`](emergency-mesh/wokwi_node), [live project](https://wokwi.com/projects/476841677745845249) |
+| Interactive map demo: click anywhere to send an SOS, destroy or repair nodes, simulate a crowd | **Built**, runs in any web browser | [`emergency-mesh/web_demo/`](emergency-mesh/web_demo) |
 | Rescue dashboard | **Prototype**: priority-sorted incident table from the simulator (also saved as CSV) | `python run.py demo` |
 | ESP32 firmware with LoRa radio | **Designed**, not built | Sections 5–6 |
 | Wi-Fi SOS page for phones | **Designed**, not built | Section 7 |
 | Schematics: system diagram, node block diagram, Wokwi circuit | **Included** | Sections 2 and 6 |
 | Physical nodes and field range tests | **Not done yet** | Section 10 |
+
+---
+
+## Repository layout
+
+```
+.
+├── emergency-mesh/
+│   ├── simulation/               Python network simulator; all results in Section 3
+│   │   ├── run.py                command-line runner
+│   │   ├── requirements.txt      matplotlib, only needed for charts
+│   │   ├── meshsim/
+│   │   │   ├── protocol.py       packet format, encoding, LoRa time-on-air
+│   │   │   ├── node.py           node behaviour (rules planned for the firmware)
+│   │   │   ├── network.py        event-driven radio simulator
+│   │   │   ├── scenarios.py      demo, failures, load, health, sensitivity
+│   │   │   └── visualize.py      charts
+│   │   ├── tests/                16 automated tests (unittest)
+│   │   └── results/              CSVs and charts from the last run
+│   ├── web_demo/                 interactive map demo, published on GitHub Pages
+│   │   ├── index.html            the page (double-click to open)
+│   │   ├── style.css             styles, light and dark
+│   │   ├── mesh.js               simulation engine (no DOM, so it also runs in Node)
+│   │   ├── app.js                map drawing, controls, rescue dashboard
+│   │   └── tests/mesh.test.js    19 engine tests (node --test)
+│   └── wokwi_node/main.py        node interface prototype (MicroPython, Wokwi)
+├── .gitignore                    Python caches and virtual environments
+├── .nojekyll                     GitHub Pages serves files as they are
+├── LICENSE                       MIT
+└── README.md
+```
 
 ---
 
@@ -290,7 +321,7 @@ Parts have not been bought; cost per node will be added after purchase.
 | SOS button (internal pull-up) | GPIO 14 |
 | RGB LED, red / green / blue | GPIO 27 / 32 / 33 |
 
-Green LED and "ONLINE" while idle. Pressing the button shows "SIGNAL RECEIVED / RELAYING" (blue), then "DANGER" with the node's stored location (red), a sample Chennai coordinate. Relaying here is only a display; the mesh logic is in `/emergency-mesh/simulation`.
+Green LED and "ONLINE" while idle. Pressing the button shows "SIGNAL RECEIVED / RELAYING" (blue), then "DANGER" with the node's stored location (red), a sample Chennai coordinate. Relaying here is only a display; the mesh logic is in [`emergency-mesh/simulation/`](emergency-mesh/simulation).
 
 ---
 
@@ -356,11 +387,10 @@ The demo's engine has its own automated tests (Node 20 or newer; no packages to 
 
 ```bash
 cd emergency-mesh/web_demo
-node --test
+node --test                         # 19 engine tests
 ```
 
 **Simulator:**
-
 
 Tested with Python 3.12. Charts need matplotlib; everything else uses the standard library.
 
@@ -374,28 +404,6 @@ python -m unittest                  # 16 automated tests
 ```
 
 On Windows, use `py` if `python` isn't recognised. Options: `--range`, `--sf`, `--loss`, `--trials`, `--seed`, `--no-charts`. With the same seed and Python version, results are identical.
-
-All project files are in the `emergency-mesh/` folder:
-
-```
-simulation/
-  run.py              command-line runner
-  meshsim/
-    protocol.py       packet format, encoding, LoRa time-on-air
-    node.py           node behaviour (rules planned for the firmware)
-    network.py        event-driven radio simulator
-    scenarios.py      demo, failures, load, health, sensitivity
-    visualize.py      charts
-  tests/              automated tests
-  results/            CSVs and charts from the last run
-web_demo/
-  index.html          interactive map demo (double-click to open)
-  style.css           styles, light and dark
-  mesh.js             simulation engine (no DOM, so it also runs in Node)
-  app.js              map drawing, controls, rescue dashboard
-  tests/mesh.test.js  engine tests (node --test)
-wokwi_node/main.py    node interface (MicroPython, Wokwi)
-```
 
 ---
 
