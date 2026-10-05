@@ -6,7 +6,7 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 
 **Live demo:** https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/
 
-**Documents:** [Project brief](docs/project-brief.pdf) (PDF, 4 pages) · [How the SOS demo works](docs/sos-demo-explained.pdf) (PDF, 1 page)
+**Documents:** [Project brief](docs/project-brief.md) · [How the SOS demo works](docs/sos-demo-explained.md)
 
 ## Where to find each judging criterion
 
@@ -42,8 +42,9 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 ```
 .
 ├── docs/
-│   ├── project-brief.pdf         what it is, how it works, results, how to present
-│   └── sos-demo-explained.pdf    one-page guide to the demo
+│   ├── images/                   figures for the project brief (SVG)
+│   ├── project-brief.md          what it is, how it works, results, how to present
+│   └── sos-demo-explained.md     short guide to the demo
 ├── emergency-mesh/
 │   ├── simulation/               Python network simulator; all results in Section 3
 │   │   ├── run.py                command-line runner
