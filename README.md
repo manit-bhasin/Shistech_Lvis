@@ -44,8 +44,13 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 .
 ├── docs/
 │   ├── images/                   figures for the project brief (SVG)
+│   ├── tools/                    builds technical-reference.pdf
+│   │   ├── build_technical_reference.py
+│   │   ├── outside_facts.csv     outside facts and sources listed in the PDF
+│   │   └── requirements.txt      Playwright, only needed to rebuild the PDF
 │   ├── project-brief.md          what it is, how it works, results, how to present
-│   └── sos-demo-explained.md     short guide to the demo
+│   ├── sos-demo-explained.md     short guide to the demo
+│   └── technical-reference.pdf   packet format, time on air, settings, results, duty cycle
 ├── emergency-mesh/
 │   ├── simulation/               Python network simulator; all results in Section 3
 │   │   ├── run.py                command-line runner
