@@ -27,6 +27,7 @@ import textwrap
 import sys
 from collections import deque
 from pathlib import Path
+from urllib.parse import urlsplit
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
@@ -80,6 +81,16 @@ def ms(seconds: float, places: int = 1) -> str:
 
 def pct(x: float, places: int = 2) -> str:
     return f"{x:.{places}f}%"
+
+
+def link_label(url: str) -> str:
+    """Short text for a link: the site, plus the page number for a link into a PDF."""
+    parts = urlsplit(url)
+    label = parts.netloc.removeprefix("www.")
+    page = re.search(r"page=(\d+)", parts.fragment)
+    if parts.path.lower().endswith(".pdf"):
+        label += " (PDF" + (f", page {page.group(1)}" if page else "") + ")"
+    return label
 
 
 def py_value(v) -> str:
@@ -771,12 +782,17 @@ Retries in a real mass event only add to this.</li>
     with open(FACTS, newline="", encoding="utf-8") as f:
         facts = list(csv.DictReader(f))
     fact_rows = [[esc(r["fact"]), esc(r["source"]),
-                  f'<a href="{esc(r["link"])}">{esc(r["link"])}</a>' if r["link"] else '<span class="muted">not linked yet</span>']
+                  f'<a href="{esc(r["link"])}">{esc(link_label(r["link"]))}</a>' if r["link"]
+                  else '<span class="muted">not linked yet</span>']
                  for r in facts]
+    checked = sorted({r["checked"] for r in facts if r.get("checked")})
+    checked_note = (f" Each link was opened and checked against its fact on "
+                    f"{' and '.join(f'{dt.date.fromisoformat(c):%d %B %Y}'.lstrip('0') for c in checked)}."
+                    if checked else "")
     s10 = f"""
 <section class="newpage"><h2><span>10</span>Outside facts</h2>
 <p>Facts this design relies on that come from outside the repository. None of them were measured by us. The list lives in
-<code>docs/tools/outside_facts.csv</code>.</p>
+<code>docs/tools/outside_facts.csv</code>, which has the full links.{checked_note}</p>
 {simple_table(["Fact", "Source", "Link"], fact_rows, "data facts", "facts")}
 </section>"""
 
@@ -905,7 +921,7 @@ table.scen td:first-child { white-space: nowrap; }
 table.scen td:last-child { width: 24%; }
 table.vr td:first-child { width: 24%; }
 table.facts td:first-child { width: 48%; }
-table.facts td:last-child { width: 22%; font-size: 7.6pt; }
+table.facts td:last-child { width: 20%; font-size: 8pt; }
 .src { font-size: 8pt; color: var(--muted); }
 .muted { color: var(--muted); font-style: italic; }
 .warn { background: #fff5c2; border: 1.5px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); padding: 2mm 3mm; }
