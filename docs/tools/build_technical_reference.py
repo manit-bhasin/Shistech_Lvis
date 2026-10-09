@@ -532,7 +532,7 @@ SF{sf}, {bw / 1000:g} kHz (<code>RadioConfig</code>); every relay repeats each n
 {simple_table(["Value", "Bit", "<code>flags</code>"], flag_rows, "data small enum", "enum-flags")}</div>
 </div>
 <p class="src">Flags combine by adding bits: <code>INJURED|TRAPPED</code> = {int(Flag.INJURED | Flag.TRAPPED)}.</p>
-<h3>Worked example: <code>encode()</code> of the first SOS in the rerouting demo</h3>
+<div class="keep-block"><h3>Worked example: <code>encode()</code> of the first SOS in the rerouting demo</h3>
 <p>The {first.priority.name.lower()} SOS from node {first.origin} in <code>run.py demo</code> (seed {seed}):
 {EmergencyType(first.emergency_type).name.lower()}, {first.people} people, flags
 {'|'.join(f.name for f in Flag if f and first.flags & f)}, landmark "{esc(first.landmark)}". It encodes to
@@ -540,7 +540,7 @@ SF{sf}, {bw / 1000:g} kHz (<code>RadioConfig</code>); every relay repeats each n
 <pre class="hex">{dump}</pre>
 {simple_table(["Bytes", "Field", "Hex", "Value"], hex_rows, "data keep", "hex-example")}
 <p class="src">Built by calling <code>encode()</code> on the packet the simulator created; <code>decode()</code>
-gives back the same packet. It matches row 1 of <code>results/demo_dashboard.csv</code>.</p>
+gives back the same packet. It matches row 1 of <code>results/demo_dashboard.csv</code>.</p></div>
 </section>"""
 
     # --------------------------------------------------------- 4. time on air
