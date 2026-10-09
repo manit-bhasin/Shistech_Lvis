@@ -78,7 +78,7 @@ Open the live link in any browser, on a laptop or a phone: [manit-bhasin.github.
 About five minutes, in this order; step 5 takes the longest, so drop it if time is short. The status line under the buttons narrates each step.
 
 1. **The map.** 25 nodes at gathering points, the rescue base (B) in the centre. Shaded circles are each node's 200 m home unit reach (assumed, not measured); grey lines are 800 m LoRa links.
-2. **Send an SOS.** Click about 50 m from node 1 (bottom left). Red dots hop node to node to the base; the dashboard shows node 1's location, the landmark and the hop count; green dots carry the confirmation back and the person's dot gets a check mark.
+2. **Send an SOS.** Click about 50 m from node 1 (bottom left). Red dots hop node to node to the base; the dashboard shows node 1's location, the landmark (demo only; home units don't send one) and the hop count; green dots carry the confirmation back and the person's dot gets a check mark.
 3. **Destroy relays.** Choose "Destroy or repair a node", click the relays on that route (they turn into an X), switch back to "Send an SOS" and click near node 1 again. The new route goes around them.
 4. **Out of reach.** Click empty space far from any node: "No working relay within 200 m". Every home unit must be within reach of a relay.
 5. **Cut off and retry.** Destroy nodes 4, 9 and 10, set speed to 20× and send from node 5. It retries at about 90, 280, 660 and 1390 s, then gives up after 5 tries (about 2 min 20 s at 20×).

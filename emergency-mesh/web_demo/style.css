@@ -484,6 +484,14 @@ button[aria-pressed="true"] {
 }
 
 /* The narrator: what just happened on the map. */
+/* The note above the fields a real home unit doesn't send. */
+.form-note {
+  margin: 12px 0 14px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
 .status {
   min-height: 4.35em;  /* three lines: the longest message wraps to three on phones */
   margin: 14px 0 0;

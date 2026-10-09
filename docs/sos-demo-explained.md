@@ -25,7 +25,7 @@ Oct 5, 2026 · Team LVISG
 
 1. A person dot appears where you clicked (a home unit at that spot), and the SOS goes over ESP-NOW to the nearest working node within 200 m.
 2. That node broadcasts it. Every node that hears it passes it on once and ignores repeats, so copies spread along every working path (red, orange, blue or grey dots, by priority).
-3. The first copy to reach the base shows up on the dashboard: priority, type, people, node location, landmark and hop count.
+3. The first copy to reach the base shows up on the dashboard: priority, type, people, node location, landmark (demo only; home units don't send one) and hop count.
 4. The base sends a confirmation back (green dots). The person's dot gets a check mark: "Delivered to rescue base".
 5. No confirmation within 90 s? The sender tries again, waiting twice as long each time, up to 5 tries, then gives up.
 

@@ -274,7 +274,9 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 | `people` | 1 B | Number of people |
 | `flags` | 1 B | Injured, trapped, child, elderly, water rising |
 | `session` | 2 B | Sender ID: the home unit's ID, used for rate limiting and to look up the address registered at install |
-| `landmark` | ≤ 16 B | e.g. "Blue gate, Ln 3" (plus 1 length byte) |
+| `landmark` | ≤ 16 B | e.g. "Blue gate, Ln 3", plus 1 length byte (optional, empty from home units) |
+
+A home unit has 4 buttons and nothing to type, so it fills in the priority and its sender ID only. Emergency type, people and flags are sent as 0, and the landmark is empty, so a home-unit SOS is 15 bytes (about 0.165 s on air). The other fields stay in the format for the relay's own SOS button and future use. The simulator and demo fill in every field to test the full format.
 
 An SOS is at most 31 bytes. ACKs name the `(origin, seq)` they confirm; heartbeats carry battery voltage, uptime and neighbour count.
 
