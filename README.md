@@ -226,7 +226,7 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 
 | Value | Reason |
 |---|---|
-| 865–868 MHz band | Licence-exempt in India under the Use of Low Power Equipment in the Frequency Band 865–868 MHz for Short Range Devices (Exemption from Licence) Rules, 2021 (G.S.R. 853(E)). For tracking, tracing and data acquisition devices: at most 500 mW e.r.p., channels up to 200 kHz, transmitting at most 2.5% of the time (10% for network access points), adaptive power control, and type-approved equipment |
+| 865–868 MHz band | Licence-exempt in India under the Use of Low Power Equipment in the Frequency Band 865–868 MHz for Short Range Devices (Exemption from Licence) Rules, 2021 (G.S.R. 853(E); [DoT's official copy](https://www.eservices.dot.gov.in/sites/default/files/2024-11/Sub-ordinate%20legislation-compressed_compressed.pdf#page=136), page 136). For tracking, tracing and data acquisition devices: at most 500 mW e.r.p., channels up to 200 kHz, transmitting at most 2.5% of the time (10% for network access points), adaptive power control, and type-approved equipment |
 | 866.0 MHz | Inside that band, with room on both sides for a 125 kHz channel |
 | ESP-NOW on 2.4 GHz (home unit to nearest relay) | Licence-exempt in India |
 | SF9, 125 kHz, coding rate 4/5 | SF9 is the suggested starting point for Indian outdoor projects; 125 kHz and 4/5 are the standard settings ([Zbotic SX1276 guide](https://zbotic.in/sx1276-lora-module-range-sensitivity-spreading-factor-guide/)) |
