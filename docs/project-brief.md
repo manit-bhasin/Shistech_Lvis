@@ -6,7 +6,7 @@ Oct 5, 2026 · Team LVISG
 
 ## What it is
 
-Emergency Mesh is a low-cost network of ESP32 + LoRa radio nodes that lets anyone with an ordinary phone send a structured SOS to a rescue base when mobile towers and the internet are down. No app, SIM card or internet is needed.
+Emergency Mesh is a low-cost network of ESP32 + LoRa radio nodes that lets people send a structured SOS to a rescue base when mobile towers and the internet are down. Each home has a simple button unit that reaches the nearest relay over ESP-NOW. No phone, app, SIM card or internet is needed.
 
 Disasters knock out phone networks exactly when people need help: after Cyclone Michaung (Chennai, December 2023), about 30% of the city's cell towers were still down (sources in our README). In those first hours, people need to tell someone who can act where they are, what is wrong and how many of them there are.
 
@@ -14,7 +14,7 @@ Built by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for SHISTECH, SD
 
 ## How it works
 
-![Flow diagram: an SOS hops from the person's phone over Wi-Fi to the nearest node, over LoRa through relay nodes to the rescue base, and the confirmation hops back to the sender](images/sos-flow.svg)
+![Flow diagram: an SOS hops from the person's home unit over ESP-NOW to the nearest node, over LoRa through relay nodes to the rescue base, and the confirmation hops back to the home unit](images/sos-flow.svg)
 
 _path of one SOS · from the protocol in node.py_
 
@@ -24,7 +24,7 @@ Every node rebroadcasts each new message once and drops repeats, so copies trave
 - **Hop limit 6:** the farthest node is 4 hops from the base; 2 spare hops allow detours.
 - **Priority:** critical, urgent, supplies, then "I'm safe", in that order.
 - **Retries:** waits double after each try, so the last of 5 sends is about 23 minutes after the first.
-- **Radio:** LoRa at 866 MHz, inside India's licence-free 865–867 MHz band, at SF9 and 125 kHz. An SOS is at most 31 bytes, about 0.25 s on air.
+- **Radio:** home units reach the nearest relay over ESP-NOW (2.4 GHz, licence-exempt in India). Relays use LoRa at 866 MHz, inside India's licence-exempt 865–868 MHz band, at SF9 and 125 kHz. An SOS is at most 31 bytes, about 0.25 s on air.
 
 ## What we built
 
@@ -37,8 +37,9 @@ The mesh logic is built and tested in software; the physical nodes are designed 
 | Node interface: OLED screen, SOS button, status LED                       | Built in the Wokwi ESP32 simulator (MicroPython) | `emergency-mesh/wokwi_node`, [Wokwi project](https://wokwi.com/projects/476841677745845249) |
 | Packet format (at most 31 bytes) and LoRa time on air                     | Built                                            | `emergency-mesh/simulation/meshsim/protocol.py`                                             |
 | ESP32 firmware with a LoRa radio                                          | Designed, not built                              | README sections 5 and 6                                                                     |
-| Phone Wi-Fi SOS page                                                      | Designed, not built                              | README section 7                                                                            |
-| Physical nodes and field range tests                                      | Not done yet                                     | README section 10                                                                           |
+| Home unit (ESP-NOW)                                                       | Designed, not built                              | README sections 6 and 7                                                                     |
+| Physical nodes                                                            | Not done yet                                     | README section 10                                                                           |
+| Field range tests for LoRa and ESP-NOW                                    | Not done yet                                     | README section 10                                                                           |
 
 ## Key results
 
@@ -76,10 +77,10 @@ Open the live link in any browser, on a laptop or a phone: [manit-bhasin.github.
 
 About five minutes, in this order; step 5 takes the longest, so drop it if time is short. The status line under the buttons narrates each step.
 
-1. **The map.** 25 nodes at gathering points, the rescue base (B) in the centre. Shaded circles are each node's 200 m phone Wi-Fi reach; grey lines are 800 m LoRa links.
+1. **The map.** 25 nodes at gathering points, the rescue base (B) in the centre. Shaded circles are each node's 200 m home unit reach (assumed, not measured); grey lines are 800 m LoRa links.
 2. **Send an SOS.** Click about 50 m from node 1 (bottom left). Red dots hop node to node to the base; the dashboard shows node 1's location, the landmark and the hop count; green dots carry the confirmation back and the person's dot gets a check mark.
 3. **Destroy relays.** Choose "Destroy or repair a node", click the relays on that route (they turn into an X), switch back to "Send an SOS" and click near node 1 again. The new route goes around them.
-4. **Out of reach.** Click empty space far from any node: "No working node within 200 m". Nodes must sit where people already gather.
+4. **Out of reach.** Click empty space far from any node: "No working relay within 200 m". Every home unit must be within reach of a relay.
 5. **Cut off and retry.** Destroy nodes 4, 9 and 10, set speed to 20× and send from node 5. It retries at about 90, 280, 660 and 1390 s, then gives up after 5 tries (about 2 min 20 s at 20×).
 6. **A crowd.** Press Reset, then "Simulate a crowd (20 SOS)". Critical messages jump the queue at every node and sit at the top of the dashboard.
 
@@ -87,13 +88,13 @@ About five minutes, in this order; step 5 takes the longest, so drop it if time 
 
 ## Limits and next steps
 
-**Limits:** people must reach a node, and phone Wi-Fi reaches only about 200 m, so nodes go where people already gather. A mass event causes heavy radio collisions. Our range and loss figures come from published sources, not our own measurements. The system only helps if a rescue team runs a base station.
+**Limits:** every home needs a unit with power during an outage, and it must be within ESP-NOW reach of a relay. A mass event causes heavy radio collisions, and our forwarding would go over India's 2.5% transmit-time limit for each relay. Our range and loss figures come from published sources, not our own measurements. The system only helps if a rescue team runs a base station.
 
 **Next steps:**
 
-1. Build 3 physical nodes, measure real range, and re-run the simulator with it.
-2. Port the forwarding rules from `node.py` to ESP32 firmware and build the phone SOS page (English and Hindi).
-3. Gradient routing (only nodes closer to the base rebroadcast) to cut collisions under heavy load.
+1. Build 3 physical nodes, measure real LoRa and ESP-NOW range, and re-run the simulator with it.
+2. Port the forwarding rules from `node.py` to ESP32 firmware and build the home unit (16×2 LCD, English with simple icons).
+3. Gradient routing (only nodes closer to the base rebroadcast) to cut collisions under heavy load and keep relays within the 2.5% transmit-time limit.
 4. Authenticate packets between nodes, then run a pilot drill at one school.
 
 **Links:** [live demo](https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/) · [repository and full README](https://github.com/manit-bhasin/Shistech_Lvis) · [Wokwi node](https://wokwi.com/projects/476841677745845249)

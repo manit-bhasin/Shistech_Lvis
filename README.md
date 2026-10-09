@@ -1,6 +1,6 @@
 # Emergency Communication Network (ESP32 + LoRa Mesh)
 
-> Low-cost ESP32 radio nodes that let anyone with an ordinary phone send an SOS to a rescue base when the mobile towers and the internet are down. The phone needs no app, SIM card or signal.
+> Low-cost ESP32 radio nodes that let people send an SOS to a rescue base when the mobile towers and the internet are down. You press a button on your home unit, it goes over ESP-NOW to the nearest relay, then relay to relay over LoRa to the base, and the confirmation shows on the home unit's screen. No phone, app, SIM card or signal needed.
 
 Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH SDG track.
 
@@ -14,7 +14,7 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 |---|---|---|
 | Innovation & Impact | 20 | Section 1 (the problem, from real Indian disasters), Section 2 (what is new), Section 12 (SDGs) |
 | Technical Execution | 20 | Section 3 (simulator, results and 16 automated tests), Section 5 (protocol), the interactive demo |
-| Design & Presentation | 20 | Section 2 (the SOS page, built for someone in a hurry), Section 7 (phone SOS page), the interactive demo |
+| Design & Presentation | 20 | Section 2 (the home unit, built for someone in a hurry), Section 7 (home unit), the interactive demo |
 | Problem-Solving & Thinking Skills | 15 | Section 8 (challenges and how we solved them), Section 3.5 (testing our own assumptions) |
 | Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`emergency-mesh/simulation/results/`](emergency-mesh/simulation/results) |
 
@@ -31,9 +31,10 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 | Interactive map demo: click anywhere to send an SOS, destroy or repair nodes, simulate a crowd | **Built**, runs in any web browser | [`emergency-mesh/web_demo/`](emergency-mesh/web_demo) |
 | Rescue dashboard | **Prototype**: priority-sorted incident table from the simulator (also saved as CSV) | `python run.py demo` |
 | ESP32 firmware with LoRa radio | **Designed**, not built | Sections 5–6 |
-| Wi-Fi SOS page for phones | **Designed**, not built | Section 7 |
+| Home unit (ESP-NOW) | **Designed**, not built | Sections 6 and 7 |
 | Schematics: system diagram, node block diagram, Wokwi circuit | **Included** | Sections 2 and 6 |
-| Physical nodes and field range tests | **Not done yet** | Section 10 |
+| Physical nodes | **Not done yet** | Section 10 |
+| Field range tests for LoRa and ESP-NOW | **Not done yet** | Section 10 |
 
 ---
 
@@ -76,9 +77,9 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 
 When a cyclone, flood or landslide hits, mobile towers get damaged or lose power, and the people who need rescuing can't call anyone.
 
-- **Cyclone Michaung, Chennai (December 2023).** After the storm, Tamil Nadu's Chief Secretary reported that 70% of Chennai's 42,747 cell towers were operational, so roughly 30% were still down. One resident told Business Standard she had no way to contact rescue teams without a network. ([Outlook India](https://www.outlookindia.com/amp/story/national/michaung-cyclone-live-chennai-india-news-tamil-nadu-cyclone-name-news-334622), [Business Standard](https://www.business-standard.com/india-news/cyclone-michaung-chennai-residents-battle-power-mobile-disruption-123120500994_1.html))
+- **Cyclone Michaung, Chennai (December 2023).** On 5 December 2023, Tamil Nadu's Chief Secretary said 70% of Chennai's 42,747 cell towers were operational, so roughly 30% were still down ([Outlook India](https://www.outlookindia.com/amp/story/national/michaung-cyclone-live-chennai-india-news-tamil-nadu-cyclone-name-news-334622)). One resident told Business Standard she had no way to contact rescue teams without a network ([Business Standard](https://www.business-standard.com/india-news/cyclone-michaung-chennai-residents-battle-power-mobile-disruption-123120500994_1.html)).
 - **Wayanad landslides (July 2024).** Telecom operators had to restore connectivity "on a war footing", and BSNL installed diesel engines so towers could keep working without grid power. ([Deccan Herald](https://www.deccanherald.com/india/keralam/telecom-operators-restore-augment-telecom-connectivity-in-landslide-hit-wayanad-3133367))
-- **Satellite SOS is not an option for most Indians yet.** Recent reporting says satellite emergency messaging on iPhones is unavailable in India due to telecom licensing. ([Karmactive](https://www.karmactive.com/apple-satellite-emergency-sos-iphone-14-15-16-india-eligibility/))
+- **Satellite SOS is not available in India yet.** iPhone Emergency SOS via satellite and Pixel Satellite SOS are not available in India ([Apple](https://support.apple.com/en-in/101573) and [Google](https://support.google.com/pixelphone/answer/15254448) support pages).
 
 In the first hours, before the towers come back, people need some way to tell a rescue team three things: where they are, what's wrong, and how many of them there are.
 
@@ -87,16 +88,16 @@ In the first hours, before the towers come back, people need some way to tell a 
 ## 2. How the system works
 
 1. Nodes are installed in advance at places people already gather: schools, relief camps, community halls, water tanks, high ground. Each has a battery and optional solar panel.
-2. A person joins the node's Wi-Fi (`SOS-HELP-<place>`) and an SOS page opens automatically, with no internet or app needed. Without a phone, they press the node's SOS button.
-3. They pick the emergency type, number of people, injured/trapped flags, and a short landmark.
+2. Each home has a small home unit. A person presses one of its buttons, and the SOS goes over ESP-NOW to the nearest relay node, with no phone, internet or app needed. Anyone outside can press the SOS button on a relay node.
+3. Each of the four buttons is one priority: critical, urgent, supplies or "I'm safe".
 4. The SOS hops from node to node over LoRa radio until it reaches the rescue base station.
-5. The base lists incidents by priority and sends a confirmation back, and the sender's screen changes to "Delivered to rescue base."
+5. The base lists incidents by priority and sends a confirmation back, and the home unit's screen changes to "Delivered to rescue base."
 6. Every node sends a heartbeat every 15 minutes, so the base finds out about a dead node long before anyone needs it.
 
 ```mermaid
 flowchart LR
-    P1[Phone] -- Wi-Fi page --> N1[Node A]
-    P2[Phone] -- Wi-Fi page --> N3[Node C]
+    H1[Home unit] -- ESP-NOW --> N1[Node A]
+    H2[Home unit] -- ESP-NOW --> N3[Node C]
     N1 -- LoRa --> N2[Relay B]
     N3 -- LoRa --> N2
     N1 -. alternate path .-> N4[Relay D]
@@ -105,14 +106,14 @@ flowchart LR
     B -- USB --> L[Laptop: incident list]
 ```
 
-**The SOS page.** It is designed but not built yet (the interactive demo shows the whole flow). The person using it may be scared, hurt or in the dark, so:
-- There is no app, account or internet involved. The page opens by itself when the phone joins the node's Wi-Fi.
-- Four large priority buttons; typing a landmark is optional.
-- Once the base confirms, the page says "Delivered to rescue base".
-- A physical SOS button on the node for people without a phone.
-- English and Hindi.
+**The home unit.** It is designed but not built yet (the interactive demo shows the whole flow). The person using it may be scared, hurt or in the dark, so:
+- There is no app, account, phone or internet involved. The unit is set up at install, including where it is.
+- Four large priority buttons and nothing to type.
+- Once the base confirms, the screen says "Delivered to rescue base".
+- A physical SOS button on each relay node for anyone outside.
+- A 16×2 LCD screen in English, with simple icons.
 
-**How this differs from Meshtastic.** [Meshtastic](https://meshtastic.org) is an open-source LoRa mesh messaging project, and it gave us the idea. In its usual setup each user carries their own node, paired to a phone app over Bluetooth ([explainer](https://e2japan.com/radio/guides/meshtastic-explained)). Ours does one job, disaster SOS: the person in trouble doesn't need a device of their own, every message has a fixed format with a priority, and the rescue team gets a sorted incident list instead of a chat.
+**How this differs from Meshtastic.** [Meshtastic](https://meshtastic.org/docs/introduction/) is open-source LoRa mesh messaging, and it inspired us. A phone is optional with it (its docs say "No phone required for mesh communication"). Ours does one job: a fixed-format priority SOS, a sorted incident list at the rescue base, heartbeats that flag dead relays, and cheap button home units.
 
 ---
 
@@ -179,6 +180,7 @@ N SOS messages from random nodes within one minute, no nodes destroyed. 5 random
 
 - Priority holds up under heavy load: at 500 messages, critical SOS arrived in a median of about 2 minutes; "I'm safe" check-ins waited about 17.
 - Collisions are the system's biggest weakness. Every message travels through every node, so a mass event causes heavy collisions: 40–50 collision events per SOS at 100+ messages. Delivery within an hour falls to 79% at 500 messages. Section 10 lists the planned fix.
+- Indian rules limit each relay to transmitting 2.5% of the time. Our forwarding has every relay repeat every message, so a mass event (like the 500-SOS test) would exceed that. Normal use, mostly heartbeats, uses about 0.4% of each relay's time. (Our own calculation: a heartbeat is 16 bytes at SF9, about 0.165 s on air; 24 nodes × 4 heartbeats per hour, forwarded by each relay.)
 - At light load there's no queue, so priority makes little difference.
 
 ### 3.4 Detecting dead nodes
@@ -219,12 +221,13 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 
 | Value | Reason |
 |---|---|
-| 865–867 MHz band | De-licensed in India, max 1 W transmit power, 4 W ERP, 200 kHz bandwidth ([DoT notification GSR 564(E)](https://dot.gov.in/sites/default/files/Delicensing%20in%20865-867%20MHz%20band%20%5BGSR%20564%20%28E%29%5D_0.pdf)) |
-| 866.0 MHz | Middle of that band, so a 125 kHz channel fits inside it |
+| 865–868 MHz band | Licence-exempt in India under the Use of Low Power Equipment in the Frequency Band 865–868 MHz for Short Range Devices (Exemption from Licence) Rules, 2021 (G.S.R. 853(E)). For tracking, tracing and data acquisition devices: at most 500 mW e.r.p., channels up to 200 kHz, transmitting at most 2.5% of the time (10% for network access points), adaptive power control, and type-approved equipment |
+| 866.0 MHz | Inside that band, with room on both sides for a 125 kHz channel |
+| ESP-NOW on 2.4 GHz (home unit to nearest relay) | Licence-exempt in India |
 | SF9, 125 kHz, coding rate 4/5 | SF9 is the suggested starting point for Indian outdoor projects; 125 kHz and 4/5 are the standard settings ([Zbotic SX1276 guide](https://zbotic.in/sx1276-lora-module-range-sensitivity-spreading-factor-guide/)) |
 | 800 m range | The same guide lists 500 m–1 km at SF9 in dense Indian cities (Delhi, Mumbai, Bangalore) for an SX1276 at +20 dBm with simple antennas. 800 m sits inside that range; Section 3.5 tests 500–1000 m |
-| +20 dBm transmit power | The SX1276's maximum (100 mW), which the range figure assumes; well under India's 1 W limit |
-| 200 m phone Wi-Fi reach (interactive demo) | Wi-Fi typically reaches about 200 m in open space and 50–100 m indoors ([Makerguides](https://www.makerguides.com/long-range-communication-with-lora-sx1276-and-esp32/)); nodes sit outdoors at gathering points |
+| +20 dBm transmit power | The SX1276's maximum (100 mW), which the range figure assumes; under the 500 mW e.r.p. limit with a simple antenna |
+| 200 m home unit reach (interactive demo, assumed) | Our assumption for the demo. A published ESP-NOW test (Espressif developer blog, "ESP-NOW for outdoor applications", by a community author) found about 150 m reliable with built-in antennas, about 60% delivery at 300 m in an open field, and about 100% to 450 m in long-range mode. Not measured by us |
 | 0.25 s per SOS on air | Calculated with the time-on-air formula in Semtech's SX1276 datasheet, for a 31-byte packet at SF9 |
 
 **Network layout (our design choices):**
@@ -244,7 +247,7 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 | Remember last 256 message IDs | Would use about 1.5 KB on the ESP32. A 16× larger memory didn't change the heavy-load results, so 256 is enough |
 | Retry after 90 s, up to 5 sends | Normal delivery takes seconds (median 2.5–12.5 s in Section 3.2), so a retry means the message was truly lost. Waits double each time, so the last retry is about 23 minutes after the first send |
 | Wait up to 1 s before sending; 0.2–1.5 s if busy | Spreads transmissions over several packet lengths (one SOS ≈ 0.25 s) to reduce collisions |
-| 3 SOS per phone per 10 minutes | Lets someone update their SOS but stops one phone flooding the network |
+| 3 SOS per home unit per 10 minutes | Lets someone update their SOS but stops one unit flooding the network |
 | Heartbeat 15 min, alert at 30 min | An alert needs two missed heartbeats, so one lost packet doesn't cause a false alarm |
 
 **Test scenarios (our choices):** the 30-second and 1-minute sending windows, the load-test priority mix (30% critical, 30% urgent, 20% supplies, 20% "I'm safe"), and the number of random networks per row (limited by running time). Each is a parameter in [`scenarios.py`](emergency-mesh/simulation/meshsim/scenarios.py).
@@ -265,7 +268,7 @@ Full table, including 0% destroyed for every setting: `emergency-mesh/simulation
 | `emergency_type` | 1 B | Medical, trapped, flooding, fire, collapse, other |
 | `people` | 1 B | Number of people |
 | `flags` | 1 B | Injured, trapped, child, elderly, water rising |
-| `session` | 2 B | Short ID of the phone session, for rate limiting |
+| `session` | 2 B | Sender ID: the home unit's ID, used for rate limiting and to look up the address registered at install |
 | `landmark` | ≤ 16 B | e.g. "Blue gate, Ln 3" (plus 1 length byte) |
 
 An SOS is at most 31 bytes. ACKs name the `(origin, seq)` they confirm; heartbeats carry battery voltage, uptime and neighbour count.
@@ -278,7 +281,7 @@ An SOS is at most 31 bytes. ACKs name the `(origin, seq)` they confirm; heartbea
 5. Copies travel along every surviving path, so there is no route to repair when a node dies.
 6. The base confirms every SOS attempt it receives.
 7. Without a confirmation, the sender retries with doubling waits, up to 5 sends.
-8. Rate limit per phone session; heartbeats from every node.
+8. Rate limit per sender ID (one per home unit); heartbeats from every node.
 
 ---
 
@@ -300,7 +303,7 @@ flowchart LR
     ESP <-->|I2C| OLED[SSD1306 OLED screen]
     BTN[SOS button] --> ESP
     ESP --> LED[RGB status LED]
-    PHONE[Phone] -. Wi-Fi SOS page .-> ESP
+    HOME[Home unit] -. ESP-NOW, 2.4 GHz .-> ESP
 ```
 
 The ESP32 and the SX1276 both run at 3.3 V. GPIO pins for the LoRa module will be assigned when the node is built; the Wokwi prototype's pins are listed below.
@@ -309,11 +312,11 @@ The ESP32 and the SX1276 both run at 3.3 V. GPIO pins for the LoRa module will b
 
 | Part | Purpose |
 |---|---|
-| ESP32 DevKit (ESP32-WROOM-32) | Controller and Wi-Fi SOS page |
+| ESP32 DevKit (ESP32-WROOM-32) | Controller; receives home unit SOS over ESP-NOW |
 | SX1276 LoRa module rated for the 868 MHz band, with antenna | Radio, set to 866.0 MHz. 433 MHz modules (such as the Ra-02) are built for a different band. Never transmit without an antenna |
 | 18650 Li-ion cell with a protected charging module | Backup power |
 | Small solar panel (optional) | Recharging during outages |
-| OLED screen, SOS button, RGB LED | Status and phone-free SOS, as in the Wokwi prototype |
+| OLED screen, SOS button, RGB LED | Status, and an SOS button for anyone outside, as in the Wokwi prototype |
 | Weatherproof enclosure | Outdoor installation |
 
 Parts have not been bought; cost per node will be added after purchase.
@@ -328,13 +331,36 @@ Parts have not been bought; cost per node will be added after purchase.
 
 Green LED and "ONLINE" while idle. Pressing the button shows "SIGNAL RECEIVED / RELAYING" (blue), then "DANGER" with the node's stored location (red), a sample Chennai coordinate. Relaying here is only a display; the mesh logic is in [`emergency-mesh/simulation/`](emergency-mesh/simulation).
 
+**Home unit block diagram (planned build):**
+
+```mermaid
+flowchart LR
+    PWR[Power that lasts through an outage] --> ESP[ESP32]
+    BTN[4 priority buttons] --> ESP
+    ESP --> LCD[16×2 LCD screen]
+    ESP -. ESP-NOW, 2.4 GHz .-> RELAY[Nearest relay node]
+```
+
+**Home unit parts:**
+
+| Part | Purpose |
+|---|---|
+| ESP32 | Controller; sends the SOS over ESP-NOW and shows the reply |
+| 16×2 LCD screen | Status and "Delivered to rescue base", in English with simple icons |
+| 4 priority buttons | Critical, urgent, supplies, "I'm safe" |
+| Power source (to be chosen) | Keeps the unit working during a power cut |
+
+Parts have not been bought; cost will be added after purchase.
+
 ---
 
-## 7. Phone SOS page (designed)
+## 7. Home unit (designed)
 
-- The ESP32 runs its own Wi-Fi network and redirects every web request to the SOS page, so it opens automatically (the standard `WiFi.softAP()` plus `DNSServer` approach on ESP32).
-- **Location:** browsers only share GPS with secure (HTTPS) pages, which a page served by an offline node can't practically be. So each node's location is recorded at installation, and the person adds a landmark.
-- English and Hindi; after sending, it shows "Waiting for rescue base…" and then "Delivered."
+- A small ESP32 box in each home: four priority buttons and a 16×2 LCD screen. No phone, app, account or internet.
+- **Screen:** English, with simple icons. Common 16×2 LCDs (HD44780) can store only 8 custom characters, so we kept to English.
+- **Location:** each unit's location and address are recorded at install under its sender ID. The base looks them up when an SOS arrives.
+- **Radio:** ESP-NOW on 2.4 GHz to the nearest relay, licence-exempt in India. One packet carries up to 250 bytes (ESP-NOW v1), so a 31-byte SOS fits.
+- After sending, the screen shows "Waiting for rescue base…" and then "Delivered."
 
 ---
 
@@ -344,12 +370,12 @@ Our approach: work out who needs help and what stops them, design the system, si
 
 | Challenge | What we did | Where |
 |---|---|---|
-| Victims won't own a radio or an app | Fixed nodes at gathering points; any phone joins the node's Wi-Fi page; a button for people without a phone | Section 2 |
-| Phones won't share GPS with an offline page | Each node's location is recorded at installation; the person adds a landmark | Section 7 |
-| ESP32 Wi-Fi reaches only about 200 m in the open | LoRa radio between nodes: 500 m–1 km at our settings in dense Indian cities | Section 4 |
-| The radio must be legal in India | 866.0 MHz, inside the de-licensed 865–867 MHz band and its power and bandwidth limits | Section 4 |
+| Victims won't own a radio or an app | A cheap button home unit set up in advance in each home; relay nodes at fixed points; an SOS button on each relay for anyone outside | Sections 2 and 7 |
+| The base must know where each SOS came from | Each home unit's location is recorded at install and looked up by its sender ID | Sections 5 and 7 |
+| ESP-NOW reaches only about 150 m reliably with built-in antennas | LoRa radio between relays: 500 m–1 km at our settings in dense Indian cities | Section 4 |
+| The radio must be legal in India | LoRa at 866.0 MHz, inside India's licence-exempt 865–868 MHz band and its power and channel limits; ESP-NOW on 2.4 GHz, also licence-exempt. The 2.5% transmit-time limit is still a gap in mass events (Section 9) | Section 4 |
 | A resent SOS would look like a duplicate and be dropped | Added an attempt number to every message ID; the base still counts all attempts as one emergency | Section 5 |
-| Retries could flood the network | Waits double after each try, at most 5 sends, at most 3 SOS per phone per 10 minutes | Section 4 |
+| Retries could flood the network | Waits double after each try, at most 5 sends, at most 3 SOS per home unit per 10 minutes | Section 4 |
 | Nodes that quietly fail are only discovered during a disaster | Heartbeats every 15 minutes, alert after 30; all 30 silently killed nodes were detected in testing | Section 3.4 |
 | No hardware or time for field tests | Built a network simulator, used published range figures, and tested what happens if they're wrong | Sections 3.5 and 4 |
 | A circuit simulator can't show how a network behaves | Wrote our own event-driven network simulator; kept Wokwi for the node's interface | Section 3 |
@@ -360,31 +386,33 @@ Our approach: work out who needs help and what stops them, design the system, si
 ## 9. Limitations
 
 **System:**
-- People must reach a node, and phone Wi-Fi range is short, so nodes go where people already gather.
+- Every home needs a unit with power during an outage, and it must be within ESP-NOW reach of a relay.
 - Unused equipment decays; heartbeats and drills reduce this but don't remove it.
 - Mass events cause heavy collisions and long waits for low-priority messages (Section 3.3).
-- The SOS page has no login (nobody can create an account mid-disaster), so false alarms are possible; rate limits reduce this.
+- Indian rules limit each relay to transmitting 2.5% of the time. Our forwarding has every relay repeat every message, so a mass event (like the 500-SOS test) would exceed that. Normal use, mostly heartbeats, uses about 0.4% of each relay's time (our own calculation, Section 3.3).
+- The home unit has no login (nobody can sign in mid-disaster), so false alarms are possible; rate limits reduce this.
 - It only helps if a control room or rescue team runs a base station.
 
 **Simulation:**
 - Range is a simple circle on flat ground: no terrain, buildings or fading beyond random loss.
 - Range and loss come from published figures and assumptions (Section 4), not our own measurements.
 - Battery use is not modelled.
+- Home units and ESP-NOW are not in the Python simulator; it models relays and the base only. The demo's 200 m home unit reach is an assumption.
 
 ---
 
 ## 10. Next steps
 
-- Build 3 physical nodes, measure real range, and re-run the simulator with the measured value.
-- Port the forwarding rules in `node.py` to ESP32 firmware, and build the phone SOS page.
-- Gradient routing: only nodes closer to the base rebroadcast, to cut collisions under heavy load.
+- Build 3 physical nodes, measure real LoRa and ESP-NOW range, and re-run the simulator with the measured value.
+- Port the forwarding rules in `node.py` to ESP32 firmware, and build the home unit.
+- Gradient routing: only nodes closer to the base rebroadcast, to cut collisions under heavy load and keep relays within the 2.5% transmit-time limit.
 - Authenticate packets between nodes with a shared key; build a web dashboard; run a pilot drill at one school.
 
 ---
 
 ## 11. Running the project
 
-**Interactive demo:** open the [live demo](https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/), or double-click `emergency-mesh/web_demo/index.html` to open it in any browser; nothing to install, and it works offline. The page loads `style.css`, `mesh.js` (the simulation engine) and `app.js` (map, controls and dashboard) from the same folder, so keep the four files together. Click near a node to send an SOS and watch it hop to the base, then see it appear on the rescue dashboard with the node's location and landmark. You can also destroy nodes to watch messages reroute, cut a node off completely to watch it retry, or send 20 SOS within 10 seconds to watch critical messages jump the queue.
+**Interactive demo:** open the [live demo](https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/), or double-click `emergency-mesh/web_demo/index.html` to open it in any browser; nothing to install, and it works offline. The page loads `style.css`, `mesh.js` (the simulation engine) and `app.js` (map, controls and dashboard) from the same folder, so keep the four files together. Click near a node to send an SOS from a home unit at that spot and watch it hop to the base, then see it appear on the rescue dashboard with the node's location and landmark. You can also destroy nodes to watch messages reroute, cut a node off completely to watch it retry, or send 20 SOS within 10 seconds to watch critical messages jump the queue.
 
 The demo uses the same layout and forwarding rules as the Python simulator, but leaves out radio collisions, listen-before-talk and random packet loss so each hop is easy to follow. The Python simulator below models all three, and all results in Section 3 come from it.
 

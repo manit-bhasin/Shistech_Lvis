@@ -13,7 +13,7 @@
   <header class="page-header">
     <p class="eyebrow">Live demo · LVISG · SHISTECH</p>
     <h1>Emergency mesh</h1>
-    <p class="intro">Click anywhere on the map to send an SOS from that spot. The nearest node picks it up over Wi-Fi, and it hops node to node over LoRa until it reaches the rescue base in the centre.</p>
+    <p class="intro">Click anywhere on the map to send an SOS from a home unit at that spot. It reaches the nearest relay over ESP-NOW, then hops relay to relay over LoRa until it reaches the rescue base in the centre.</p>
   </header>
 
   <main class="layout">
@@ -100,7 +100,7 @@
             </select>
           </div>
           <div class="field">
-            <label for="reach">Show Wi-Fi reach</label>
+            <label for="reach">Show home unit reach</label>
             <select id="reach">
               <option value="on" selected>On</option>
               <option value="off">Off</option>
@@ -131,7 +131,7 @@
       <section aria-labelledby="about-heading" class="about">
         <h2 id="about-heading">About this demo</h2>
         <p>Nodes follow the same rules as the project's Python simulator (<code>simulation/meshsim/node.py</code>): duplicate dropping, a hop limit of 6, highest priority sent first, a random wait of up to 1 s before sending, a confirmation from the base, and up to 5 sends with doubling waits from 90 s. The 25-node layout is the same one used in the Python demo.</p>
-        <p>Simplified for clarity: radio collisions, listen-before-talk and random packet loss are left out here; the Python simulator models all three. Radio range is 800 m and phone Wi-Fi reach is 200 m (sources in the README). The base sees each node's recorded location and the typed landmark, not the exact spot that was clicked.</p>
+        <p>Simplified for clarity: radio collisions, listen-before-talk and random packet loss are left out here; the Python simulator models all three. Radio range is 800 m (assumed from published figures, not measured) and home unit reach is 200 m (assumed, not measured). The base sees each node's recorded location and the typed landmark, not the exact spot that was clicked.</p>
       </section>
     </div>
   </main>

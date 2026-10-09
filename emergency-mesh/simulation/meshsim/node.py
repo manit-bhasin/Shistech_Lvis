@@ -19,7 +19,7 @@ class NodeConfig:
     seen_cache_size: int = 256          # recent message IDs remembered for dedup
     ack_timeout_s: float = 90.0         # wait this long for an ACK before retrying
     max_attempts: int = 5               # total sends of one SOS (1 + 4 retries)
-    rate_limit_count: int = 3           # SOS per phone session ...
+    rate_limit_count: int = 3           # SOS per sender ID (home unit) ...
     rate_limit_window_s: float = 600.0  # ... per this many seconds
     heartbeat_interval_s: float = 900.0
     silent_alert_s: float = 1800.0      # base flags a node silent for this long

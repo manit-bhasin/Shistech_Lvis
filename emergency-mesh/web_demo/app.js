@@ -164,7 +164,7 @@
     }
     ctx.stroke();
 
-    // Wi-Fi reach around working nodes.
+    // Home unit reach (ESP-NOW) around working nodes.
     if (showReach) {
       ctx.fillStyle = colours["--focus"];
       ctx.globalAlpha = 0.07;
@@ -332,7 +332,7 @@
       ctx.fillText(text, lx, ly);
     }
 
-    // Clicks with no working node in Wi-Fi reach.
+    // Clicks with no working node in home unit reach.
     ctx.strokeStyle = colours["--muted"];
     ctx.lineWidth = 2;
     for (const mark of missMarks) {
@@ -501,7 +501,7 @@
     const { lat, lon } = Mesh.toLatLon(x, y);
     setText(ui.pointer, `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
     const hit = Mesh.nearestNode(sim, x, y, Infinity, true);
-    const outOfReach = hit && hit.distance > sim.cfg.wifiReach ? " (out of Wi-Fi reach)" : "";
+    const outOfReach = hit && hit.distance > sim.cfg.wifiReach ? " (out of home unit reach)" : "";
     setText(ui.nearest, hit ? `node ${hit.node.id}, ${Math.round(hit.distance)} m${outOfReach}` : "–");
   }
 

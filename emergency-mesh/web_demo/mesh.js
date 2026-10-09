@@ -14,7 +14,7 @@
   // Defaults match NodeConfig, RadioConfig and protocol.py in the Python simulator.
   const DEFAULTS = Object.freeze({
     radioRange: 800,           // m: two nodes this close are neighbours
-    wifiReach: 200,            // m: how far a phone reaches a node over Wi-Fi
+    wifiReach: 200,            // m: how far a home unit reaches a relay over ESP-NOW (assumed, not measured)
     toggleReach: 150,          // m: how close a click must be to destroy or repair a node
     hopLimit: 6,
     seenCacheSize: 256,        // recent message IDs remembered per node
@@ -383,7 +383,7 @@
     };
   }
 
-  // A person at (x, y) sends an SOS through the nearest working node in Wi-Fi reach.
+  // A person at (x, y) sends an SOS through the nearest working node in home unit reach.
   // report: { priority, emergencyType, people, landmark }. Returns the SOS record, or null.
   function sendSOS(sim, x, y, report, options) {
     const quiet = Boolean(options && options.quiet);
@@ -391,7 +391,7 @@
     if (!hit) {
       sim.misses.push({ x, y, time: sim.now });
       if (!quiet) {
-        say(sim, `No working node within ${sim.cfg.wifiReach} m of that spot. Nodes sit at gathering points, so move closer to one.`);
+        say(sim, `No working relay within ${sim.cfg.wifiReach} m of that spot (home unit reach, assumed, not measured). Move closer to one.`);
       }
       return null;
     }

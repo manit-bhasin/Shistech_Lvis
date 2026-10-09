@@ -120,7 +120,7 @@ test("9. the outbox sends the highest priority first", () => {
   assert.deepEqual(sim.nodes[1].outbox.map((p) => p.priority), [3, 2, 1, 0]);
 });
 
-test("10. a click out of Wi-Fi reach is a miss", () => {
+test("10. a click out of home unit reach is a miss", () => {
   const sim = Mesh.createSim({ seed: SEED });
   const distance = Mesh.nearestNode(sim, 300, 300, Infinity, true).distance;
   assert.ok(distance > 316 && distance < 318, `nearest node was ${distance} m away`);
@@ -128,7 +128,7 @@ test("10. a click out of Wi-Fi reach is a miss", () => {
   assert.equal(sim.misses.length, 1);
   assert.equal(sim.stats.sosSent, 0);
   assert.equal(lastMessage(sim),
-    "No working node within 200 m of that spot. Nodes sit at gathering points, so move closer to one.");
+    "No working relay within 200 m of that spot (home unit reach, assumed, not measured). Move closer to one.");
 });
 
 test("11. the base cannot be destroyed", () => {

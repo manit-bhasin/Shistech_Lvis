@@ -70,7 +70,7 @@ class Packet:
     emergency_type: int = 0
     people: int = 0
     flags: int = 0
-    session: int = 0
+    session: int = 0  # sender ID: the home unit's ID (rate limit, address lookup)
     landmark: str = ""
     # ACK fields
     ref_origin: int = 0

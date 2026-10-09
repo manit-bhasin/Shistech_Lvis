@@ -81,7 +81,7 @@ class MeshTests(unittest.TestCase):
         node = sim.nodes[1]
         results = [sos(node, session=42) for _ in range(4)]
         self.assertEqual(sum(r is not None for r in results), 3)
-        self.assertIsNotNone(sos(node, session=43))  # a different phone is unaffected
+        self.assertIsNotNone(sos(node, session=43))  # a different home unit is unaffected
         self.assertEqual(sim.stats["rate_limited"], 1)
 
     def test_collision_destroys_both_packets(self):
