@@ -6,14 +6,14 @@ Made by Manit Bhasin, Divit Rastogi and Rajveer Kapoor (LVISG) for the SHISTECH 
 
 **Live demo:** https://manit-bhasin.github.io/Shistech_Lvis/emergency-mesh/web_demo/
 
-**Documents:** [Project brief](docs/project-brief.md) · [How the SOS demo works](docs/sos-demo-explained.md)
+**Documents:** [Project brief](docs/project-brief.md) · [How the SOS demo works](docs/sos-demo-explained.md) · [Technical reference (PDF)](docs/technical-reference.pdf)
 
 ## Where to find each judging criterion
 
 | Criterion | Points | Where to look |
 |---|---|---|
 | Innovation & Impact | 20 | Section 1 (the problem, from real Indian disasters), Section 2 (what is new), Section 12 (SDGs) |
-| Technical Execution | 20 | Section 3 (simulator, results and 16 automated tests), Section 5 (protocol), the interactive demo |
+| Technical Execution | 20 | Section 3 (simulator, results and 16 automated tests), Section 5 (protocol), the interactive demo, the [technical reference PDF](docs/technical-reference.pdf) |
 | Design & Presentation | 20 | Section 2 (the home unit, built for someone in a hurry), Section 7 (home unit), the interactive demo |
 | Problem-Solving & Thinking Skills | 15 | Section 8 (challenges and how we solved them), Section 3.5 (testing our own assumptions) |
 | Documentation & Completeness | 10 | Section 6 (schematics), Section 11 (how to run everything), [`emergency-mesh/simulation/results/`](emergency-mesh/simulation/results) |
