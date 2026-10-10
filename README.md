@@ -188,7 +188,7 @@ N SOS messages from random nodes within one minute, no nodes destroyed. 5 random
 - Indian rules limit each relay to transmitting 2.5% of the time. Our forwarding has every relay repeat every message, so a mass event (like the 500-SOS test) would exceed that. Normal use, mostly heartbeats, uses about 0.4% of each relay's time. (Our own calculation: a heartbeat is 16 bytes at SF9, about 0.165 s on air; 24 nodes × 4 heartbeats per hour, forwarded by each relay.)
 - At light load there's no queue, so priority makes little difference.
 
-### 3.4 Detecting dead nodes
+### 3.4 Detecting dead node modules
 
 Heartbeat every 15 minutes; alert after 30 minutes of silence. 10 runs, 3 nodes killed silently in each.
 
